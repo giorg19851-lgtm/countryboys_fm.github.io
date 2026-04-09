@@ -43,9 +43,9 @@
             height: 100%;
             object-fit: cover;
             border-radius: 50%;
-            pointer-events: none; /* чтобы кнопки были кликабельны */
+            pointer-events: none;
         }
-        /* Анимация вращения */
+
         @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
@@ -69,56 +69,59 @@
             pointer-events: none;
         }
 
-        /* Слой с кнопками и текстом (не вращается) */
+        /* Слой с кнопками и текстом — без фона, прямо на пластинке */
         .vinyl-controls {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 55%;   /* Уменьшено для центрирования и компактности */
+            width: 70%;
             text-align: center;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(4px);
-            border: 1px solid white;
-            border-radius: 30px;
-            padding: 10px 8px;
             z-index: 10;
             pointer-events: auto;
+            /* Убираем фон, границу, блюр */
+            background: transparent;
+            backdrop-filter: none;
+            border: none;
+            border-radius: 0;
+            padding: 0;
         }
 
-        /* Все элементы внутри уменьшены на ~20% */
         h1 {
-            font-size: 11px;
-            margin-bottom: 10px;
+            font-size: 14px;
+            margin-bottom: 12px;
             letter-spacing: 1px;
             color: white;
-            text-shadow: 1px 1px 0 black;
+            text-shadow: 1px 1px 0 black, 0 0 8px rgba(0,0,0,0.8);
             word-break: break-word;
         }
 
         .status {
-            font-size: 8px;
-            background: black;
+            font-size: 10px;
+            background: rgba(0,0,0,0.5);
             border: 1px solid white;
             padding: 6px;
             margin: 8px 0;
             font-family: 'Press Start 2P', monospace;
             color: white;
+            display: inline-block;
+            backdrop-filter: blur(2px);
         }
 
         .controls {
-            margin: 8px 0;
+            margin: 12px 0;
         }
 
         button {
-            background: black;
+            background: rgba(0,0,0,0.7);
             border: 1px solid white;
             font-family: 'Press Start 2P', monospace;
-            font-size: 8px;
-            padding: 5px 10px;
+            font-size: 10px;
+            padding: 6px 12px;
             color: white;
             cursor: pointer;
-            margin: 3px;
+            margin: 5px;
+            backdrop-filter: blur(2px);
         }
         button:active {
             background: white;
@@ -126,14 +129,15 @@
         }
 
         .footer {
-            font-size: 6px;
-            margin-top: 8px;
-            color: #aaa;
+            font-size: 8px;
+            margin-top: 10px;
+            color: #ccc;
+            text-shadow: 1px 1px 0 black;
         }
 
         .blinking-cursor {
             display: inline-block;
-            width: 6px;
+            width: 8px;
             animation: blink 1s step-end infinite;
         }
         @keyframes blink {
@@ -149,11 +153,11 @@
     </video>
     <div class="vinyl-controls">
         <h1>COUNTRY BOYS FM</h1>
-        <div class="status" id="playbackStatus"> НАЖМИ СЛЫШАТЬ</div>
+        <div class="status" id="playbackStatus">НАЖМИ СЛЫШАТЬ</div>
         <div class="controls">
-            <button id="startBtn">СЛАШЫТЬ</button>
+            <button id="startBtn">СЛАШАТЬ</button>
         </div>
-        <div class="footer">выключи эту хуйню </div>
+        <div class="footer">выключи эту хуйню</div>
         <button id="closeBtn">НЕ СЛЫШАТЬ</button>
     </div>
 </div>
@@ -162,7 +166,6 @@
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
-    // АУДИО ССЫЛКА (ваша)
     const audioUrl = "https://videotourl.com/audio/1775763278412-e5f55dc7-1efc-4948-9f59-cb84416861e2.mp3";
 
     const audio = document.getElementById('radioPlayer');
@@ -170,14 +173,12 @@
     const vinylVideo = document.getElementById('vinylVideo');
     const tg = window.Telegram.WebApp;
 
-    // Сохранение позиции аудио
     function savePosition() {
         if (audio && !isNaN(audio.currentTime) && audio.currentTime > 0) {
             localStorage.setItem('radio_position', audio.currentTime);
         }
     }
 
-    // Загрузка трека и восстановление позиции
     function loadTrack() {
         audio.src = audioUrl;
         audio.load();
@@ -189,11 +190,10 @@
             statusDiv.innerHTML = `⏸ ТАЙМКОД (${mins}:${secs})<span class="blinking-cursor">_</span>`;
         } else {
             audio.currentTime = 0;
-            statusDiv.innerHTML = ` НАЖМИ СЛЫШАТЬ<span class="blinking-cursor">_</span>`;
+            statusDiv.innerHTML = `НАЖМИ СЛЫШАТЬ<span class="blinking-cursor">_</span>`;
         }
     }
 
-    // Запуск вращения видео
     function startSpinning() {
         vinylVideo.classList.add('spinning');
         vinylVideo.play().catch(e => console.log("video autoplay blocked", e));
@@ -203,7 +203,6 @@
         vinylVideo.pause();
     }
 
-    // Запуск воспроизведения аудио
     function startPlayback() {
         audio.play().then(() => {
             statusDiv.innerHTML = `СЛЫШИШЬ?<span class="blinking-cursor">_</span>`;
@@ -214,9 +213,8 @@
         });
     }
 
-    // События аудио
     audio.addEventListener('play', () => {
-        statusDiv.innerHTML = `СЛЫШИШЬ<span class="blinking-cursor">_</span>`;
+        statusDiv.innerHTML = `СЛЫШИШЬ?<span class="blinking-cursor">_</span>`;
         startSpinning();
     });
     audio.addEventListener('pause', () => {
@@ -230,7 +228,6 @@
         stopSpinning();
     });
 
-    // Сохранение позиции каждые 2 сек
     setInterval(() => {
         if (audio && !audio.paused && !isNaN(audio.currentTime)) {
             savePosition();
@@ -238,14 +235,12 @@
     }, 2000);
     window.addEventListener('beforeunload', () => savePosition());
 
-    // Telegram WebApp
     tg.expand();
     tg.MainButton.setText("ЗАКРЫТЬ");
     tg.MainButton.onClick(() => tg.close());
     tg.MainButton.show();
     document.getElementById('closeBtn').addEventListener('click', () => tg.close());
 
-    // Кнопка старта
     document.getElementById('startBtn').addEventListener('click', () => {
         if (!audio.src || audio.src === "") {
             loadTrack();
@@ -253,9 +248,7 @@
         startPlayback();
     });
 
-    // Инициализация
     loadTrack();
-    // Если аудио уже играло (восстановлено) – запустим вращение
     if (audio.currentTime > 0 && !audio.paused) {
         startSpinning();
     } else {
