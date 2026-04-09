@@ -14,46 +14,48 @@
         }
 
         body {
-            background-color: black;
+            background: black;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             font-family: 'Press Start 2P', monospace;
-            position: relative;
             overflow: hidden;
         }
 
-        /* Контейнер с винилом */
-        .vinyl-container {
+        /* Контейнер-пластинка (круг) */
+        .vinyl {
             position: relative;
             width: 90vw;
             max-width: 500px;
             aspect-ratio: 1 / 1;
             border-radius: 50%;
-            overflow: visible;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(255,255,255,0.3);
         }
 
-        /* Сам диск */
-        .vinyl-disc {
+        /* Видео-фон (вращается) */
+        .vinyl-video {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+            object-fit: cover;
             border-radius: 50%;
-            background-image: url('https://raw.githubusercontent.com/giorg19851-lgtm/countryboys_fm.github.io/main/fm.png');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            box-shadow: 0 0 20px rgba(255,255,255,0.3);
-            transition: box-shadow 0.2s;
-            /* Чёрное отверстие в центре (псевдоэлемент) */
+            pointer-events: none; /* чтобы кнопки были кликабельны */
         }
-        .vinyl-disc::after {
+        /* Анимация вращения */
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .vinyl-video.spinning {
+            animation: spin 4s linear infinite;
+        }
+
+        /* Чёрное отверстие в центре (вращается вместе с видео) */
+        .vinyl-video::after {
             content: "";
             position: absolute;
             top: 50%;
@@ -64,62 +66,59 @@
             border-radius: 50%;
             transform: translate(-50%, -50%);
             box-shadow: 0 0 0 2px white;
+            pointer-events: none;
         }
 
-        /* Анимация вращения */
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        .vinyl-disc.spinning {
-            animation: spin 4s linear infinite;
-        }
-
-        /* Контент поверх диска (текст, кнопки) */
-        .vinyl-content {
-            position: relative;
-            z-index: 10;
-            width: 70%;
+        /* Слой с кнопками и текстом (не вращается) */
+        .vinyl-controls {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 55%;   /* Уменьшено для центрирования и компактности */
             text-align: center;
-            color: white;
-            text-shadow: 1px 1px 0 black;
-            background-color: rgba(0,0,0,0.6);
-            border-radius: 40px;
-            padding: 15px 10px;
+            background: rgba(0,0,0,0.7);
             backdrop-filter: blur(4px);
             border: 1px solid white;
+            border-radius: 30px;
+            padding: 10px 8px;
+            z-index: 10;
             pointer-events: auto;
         }
 
+        /* Все элементы внутри уменьшены на ~20% */
         h1 {
-            font-size: 14px;
-            margin-bottom: 15px;
+            font-size: 11px;
+            margin-bottom: 10px;
             letter-spacing: 1px;
+            color: white;
+            text-shadow: 1px 1px 0 black;
             word-break: break-word;
         }
 
         .status {
-            font-size: 10px;
+            font-size: 8px;
             background: black;
             border: 1px solid white;
-            padding: 8px;
-            margin: 10px 0;
+            padding: 6px;
+            margin: 8px 0;
             font-family: 'Press Start 2P', monospace;
+            color: white;
         }
 
         .controls {
-            margin: 10px 0;
+            margin: 8px 0;
         }
 
         button {
             background: black;
             border: 1px solid white;
             font-family: 'Press Start 2P', monospace;
-            font-size: 10px;
-            padding: 6px 12px;
+            font-size: 8px;
+            padding: 5px 10px;
             color: white;
             cursor: pointer;
-            margin: 5px;
+            margin: 3px;
         }
         button:active {
             background: white;
@@ -127,14 +126,14 @@
         }
 
         .footer {
-            font-size: 8px;
-            margin-top: 10px;
+            font-size: 6px;
+            margin-top: 8px;
             color: #aaa;
         }
 
         .blinking-cursor {
             display: inline-block;
-            width: 8px;
+            width: 6px;
             animation: blink 1s step-end infinite;
         }
         @keyframes blink {
@@ -144,13 +143,15 @@
     </style>
 </head>
 <body>
-<div class="vinyl-container">
-    <div class="vinyl-disc" id="vinylDisc"></div>
-    <div class="vinyl-content">
-        <h1>🎧 DJ TOKYO ALREADY HATES US</h1>
-        <div class="status" id="playbackStatus">⚫ НАЖМИ СЛЫШАТЬ</div>
+<div class="vinyl">
+    <video class="vinyl-video" id="vinylVideo" loop muted playsinline>
+        <source src="https://github.com/giorg19851-lgtm/countryboys_fm.github.io/raw/refs/heads/main/document_5386562835193042585.mp4" type="video/mp4">
+    </video>
+    <div class="vinyl-controls">
+        <h1>COUNTRY BOYS FM</h1>
+        <div class="status" id="playbackStatus"> НАЖМИ СЛЫШАТЬ</div>
         <div class="controls">
-            <button id="startBtn">▶ СЛЫШАТЬ</button>
+            <button id="startBtn">СЛАШЫТЬ</button>
         </div>
         <div class="footer">выключи эту хуйню </div>
         <button id="closeBtn">НЕ СЛЫШАТЬ</button>
@@ -166,10 +167,10 @@
 
     const audio = document.getElementById('radioPlayer');
     const statusDiv = document.getElementById('playbackStatus');
-    const vinylDisc = document.getElementById('vinylDisc');
+    const vinylVideo = document.getElementById('vinylVideo');
     const tg = window.Telegram.WebApp;
 
-    // Сохранение позиции
+    // Сохранение позиции аудио
     function savePosition() {
         if (audio && !isNaN(audio.currentTime) && audio.currentTime > 0) {
             localStorage.setItem('radio_position', audio.currentTime);
@@ -185,25 +186,27 @@
             audio.currentTime = parseFloat(savedTime);
             const mins = Math.floor(parseFloat(savedTime) / 60);
             const secs = Math.floor(parseFloat(savedTime) % 60).toString().padStart(2,'0');
-            statusDiv.innerHTML = `⏸ ГОТОВ (${mins}:${secs})<span class="blinking-cursor">_</span>`;
+            statusDiv.innerHTML = `⏸ ТАЙМКОД (${mins}:${secs})<span class="blinking-cursor">_</span>`;
         } else {
             audio.currentTime = 0;
-            statusDiv.innerHTML = `⚫ НАЖМИ СТАРТ<span class="blinking-cursor">_</span>`;
+            statusDiv.innerHTML = ` НАЖМИ СЛЫШАТЬ<span class="blinking-cursor">_</span>`;
         }
     }
 
-    // Запуск вращения диска
+    // Запуск вращения видео
     function startSpinning() {
-        vinylDisc.classList.add('spinning');
+        vinylVideo.classList.add('spinning');
+        vinylVideo.play().catch(e => console.log("video autoplay blocked", e));
     }
     function stopSpinning() {
-        vinylDisc.classList.remove('spinning');
+        vinylVideo.classList.remove('spinning');
+        vinylVideo.pause();
     }
 
-    // Запуск воспроизведения
+    // Запуск воспроизведения аудио
     function startPlayback() {
         audio.play().then(() => {
-            statusDiv.innerHTML = ` СНОВА СЛЫШАТЬ<span class="blinking-cursor">_</span>`;
+            statusDiv.innerHTML = `СЛЫШИШЬ?<span class="blinking-cursor">_</span>`;
             startSpinning();
         }).catch((err) => {
             statusDiv.innerHTML = `❌ ОШИБКА<span class="blinking-cursor">_</span>`;
@@ -213,7 +216,7 @@
 
     // События аудио
     audio.addEventListener('play', () => {
-        statusDiv.innerHTML = `СЛУШАНИЕ<span class="blinking-cursor">_</span>`;
+        statusDiv.innerHTML = `СЛЫШИШЬ<span class="blinking-cursor">_</span>`;
         startSpinning();
     });
     audio.addEventListener('pause', () => {
@@ -223,7 +226,7 @@
     audio.addEventListener('ended', () => {
         audio.currentTime = 0;
         localStorage.setItem('radio_position', 0);
-        statusDiv.innerHTML = `🏁 ТРЕК ЗАВЕРШЁН (СТАРТ заново)<span class="blinking-cursor">_</span>`;
+        statusDiv.innerHTML = `FIN (СТАРТ заново)<span class="blinking-cursor">_</span>`;
         stopSpinning();
     });
 
@@ -252,7 +255,7 @@
 
     // Инициализация
     loadTrack();
-    // Если аудио уже играло (восстановлено из сохранения) – проверим и запустим вращение
+    // Если аудио уже играло (восстановлено) – запустим вращение
     if (audio.currentTime > 0 && !audio.paused) {
         startSpinning();
     } else {
