@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Vinyl Radio</title>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -19,7 +19,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-family: 'VT323', monospace; /* более тонкий шрифт */
+            font-family: 'Press Start 2P', monospace;
             overflow: hidden;
         }
 
@@ -69,7 +69,7 @@
             pointer-events: none;
         }
 
-        /* Слой с кнопками и текстом — без фона, прямо на пластинке */
+        /* Слой с кнопками и текстом — прямо на пластинке */
         .vinyl-controls {
             position: absolute;
             top: 50%;
@@ -84,7 +84,7 @@
 
         h1 {
             font-family: 'Press Start 2P', monospace;
-            font-weight: 100;  /* делаем тоньше */
+            font-weight: normal;
             font-size: 12px;
             margin-bottom: 12px;
             letter-spacing: 1px;
@@ -94,15 +94,15 @@
         }
 
         .status {
-            font-family: 'VT323', monospace;
-            font-size: 14px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 8px;
             background: rgba(0,0,0,0.5);
             border: 1px solid white;
             padding: 6px 10px;
             margin: 8px auto;
             display: inline-block;
             backdrop-filter: blur(2px);
-            letter-spacing: 1px;
+            letter-spacing: 0px;
         }
 
         .controls {
@@ -110,10 +110,10 @@
         }
 
         button {
+            font-family: 'Press Start 2P', monospace;
             background: rgba(0,0,0,0.7);
             border: 1px solid white;
-            font-family: 'VT323', monospace;
-            font-size: 14px;
+            font-size: 8px;
             padding: 6px 12px;
             color: white;
             cursor: pointer;
@@ -127,8 +127,8 @@
         }
 
         .footer {
-            font-family: 'VT323', monospace;
-            font-size: 10px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 7px;
             margin-top: 10px;
             color: #ccc;
             text-shadow: 1px 1px 0 black;
@@ -174,7 +174,7 @@
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
-    // ---------- АНИМАЦИЯ "ВЫКЛЮЧАЮЩИХСЯ БУКВ" ----------
+    // ---------- АНИМАЦИЯ "ВЫКЛЮЧАЮЩИХСЯ БУКВ" (РЕДКО) ----------
     let glitchIntervals = [];
 
     function stopAllGlitch() {
@@ -187,7 +187,6 @@
         const originalText = element.innerText;
         if (!originalText) return;
         
-        // Разбиваем текст на буквы и оборачиваем каждую в span
         const letters = originalText.split('');
         const spans = letters.map(char => {
             if (char === ' ') return ' ';
@@ -198,7 +197,7 @@
         const spansList = element.querySelectorAll('.glitch-letter');
         if (spansList.length === 0) return;
         
-        // Случайное мерцание для каждой буквы
+        // РЕДКОЕ мерцание: интервал от 1500 до 3000 мс
         const interval = setInterval(() => {
             const randomIndex = Math.floor(Math.random() * spansList.length);
             const letter = spansList[randomIndex];
@@ -206,8 +205,8 @@
             letter.classList.add('off');
             setTimeout(() => {
                 letter.classList.remove('off');
-            }, 150);
-        }, Math.random() * 400 + 300); // 300-700 мс между мерцаниями
+            }, 200); // буква выключена на 200 мс
+        }, Math.random() * 1500 + 1500); // 1500-3000 мс
         glitchIntervals.push(interval);
     }
 
@@ -217,7 +216,6 @@
         const footer = document.getElementById('glitchFooter');
         if (title) applyGlitchToElement(title);
         if (footer) applyGlitchToElement(footer);
-        // Кнопка "ЖМЯК" тоже может мерцать, но это необязательно
         const startBtn = document.getElementById('startBtn');
         if (startBtn && !startBtn.hasGlitch) {
             applyGlitchToElement(startBtn);
@@ -230,13 +228,11 @@
         }
     }
 
-    // Динамический статус с сохранением анимации
+    // Динамический статус с мерцанием (редко)
     function updateStatusText(newText) {
         const statusDiv = document.getElementById('playbackStatus');
         if (!statusDiv) return;
-        // Сохраняем оригинальный текст без HTML-тегов
         statusDiv.innerText = newText;
-        // Применяем эффект мерцания к каждой букве
         const letters = newText.split('');
         const spans = letters.map(char => {
             if (char === ' ') return ' ';
@@ -244,7 +240,6 @@
         });
         statusDiv.innerHTML = spans.join('') + '<span class="blinking-cursor">_</span>';
         
-        // Добавляем мерцание для новых букв
         const spansList = statusDiv.querySelectorAll('.glitch-letter');
         if (spansList.length > 0) {
             const interval = setInterval(() => {
@@ -252,9 +247,9 @@
                 const letter = spansList[randomIndex];
                 if (letter) {
                     letter.classList.add('off');
-                    setTimeout(() => letter.classList.remove('off'), 150);
+                    setTimeout(() => letter.classList.remove('off'), 200);
                 }
-            }, Math.random() * 400 + 300);
+            }, Math.random() * 1500 + 1500);
             glitchIntervals.push(interval);
         }
     }
@@ -341,7 +336,6 @@
         startPlayback();
     });
 
-    // Запуск
     loadTrack();
     if (audio.currentTime > 0 && !audio.paused) {
         startSpinning();
@@ -349,7 +343,6 @@
         stopSpinning();
     }
     
-    // Применяем анимацию к статическим элементам (заголовок, футер, кнопки)
     applyGlitchToStatic();
 </script>
 </body>
