@@ -23,7 +23,7 @@
             position: relative;
         }
 
-        /* ФОНОВОЕ ИЗОБРАЖЕНИЕ (усиление яркости и белых тонов, лёгкое обесцвечивание) */
+        /* ФОНОВОЕ ИЗОБРАЖЕНИЕ (усиление яркости и белых тонов) */
         body::before {
             content: "";
             position: fixed;
@@ -79,8 +79,6 @@
             display: inline-block;
             padding-bottom: 8px;
         }
-
-        /* Убираем subtitle "пососешь ок?" — полностью удалён */
 
         .status {
             font-family: 'Press Start 2P', monospace;
@@ -139,7 +137,6 @@
     <div class="player-card">
         <h1>🎧 DJ TOKYO ALREADY HATES US</h1>
         
-        <!-- Скрытый аудиоплеер (без autoplay) -->
         <audio id="radioPlayer" style="display: none;" preload="auto"></audio>
         
         <div class="status" id="playbackStatus">
@@ -156,21 +153,19 @@
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
-        // ПРЯМАЯ ССЫЛКА НА МР3 (ваша)
-        const audioUrl = "https://videotourl.com/audio/1775762475313-dbf1c950-700c-4913-9527-152a845af93e.mp3";
+        // НОВАЯ ССЫЛКА НА МР3
+        const audioUrl = "https://videotourl.com/audio/1775763278412-e5f55dc7-1efc-4948-9f59-cb84416861e2.mp3";
 
         const audio = document.getElementById('radioPlayer');
         const statusDiv = document.getElementById('playbackStatus');
         const tg = window.Telegram.WebApp;
 
-        // Функция сохранения позиции
         function savePosition() {
             if (audio && !isNaN(audio.currentTime) && audio.currentTime > 0) {
                 localStorage.setItem('radio_position', audio.currentTime);
             }
         }
 
-        // Загрузка трека и восстановление позиции (без автовоспроизведения)
         function loadTrack() {
             audio.src = audioUrl;
             audio.load();
@@ -178,14 +173,15 @@
             const savedTime = localStorage.getItem('radio_position');
             if (savedTime && !isNaN(parseFloat(savedTime))) {
                 audio.currentTime = parseFloat(savedTime);
-                statusDiv.innerHTML = `⏸ ГОТОВ (${Math.floor(parseFloat(savedTime) / 60)}:${Math.floor(parseFloat(savedTime) % 60).toString().padStart(2,'0')}) <span class="blinking-cursor">_</span>`;
+                const mins = Math.floor(parseFloat(savedTime) / 60);
+                const secs = Math.floor(parseFloat(savedTime) % 60).toString().padStart(2,'0');
+                statusDiv.innerHTML = `⏸ ГОТОВ (${mins}:${secs}) <span class="blinking-cursor">_</span>`;
             } else {
                 audio.currentTime = 0;
                 statusDiv.innerHTML = `⚫ НАЖМИ СТАРТ <span class="blinking-cursor">_</span>`;
             }
         }
 
-        // Запуск воспроизведения
         function startPlayback() {
             audio.play().then(() => {
                 statusDiv.innerHTML = `🎵 ИГРАЕТ <span class="blinking-cursor">_</span>`;
@@ -195,7 +191,6 @@
             });
         }
 
-        // События аудио
         audio.addEventListener('play', () => {
             statusDiv.innerHTML = `🎵 ИГРАЕТ <span class="blinking-cursor">_</span>`;
         });
@@ -210,33 +205,27 @@
             statusDiv.innerHTML = `🏁 ТРЕК ЗАВЕРШЁН (нажми СТАРТ сначала) <span class="blinking-cursor">_</span>`;
         });
 
-        // Сохраняем позицию каждые 2 секунды
         setInterval(() => {
             if (audio && !audio.paused && !isNaN(audio.currentTime)) {
                 savePosition();
             }
         }, 2000);
         
-        // Сохраняем перед закрытием страницы
         window.addEventListener('beforeunload', () => savePosition());
 
-        // Telegram WebApp
         tg.expand();
         tg.MainButton.setText("ЗАКРЫТЬ");
         tg.MainButton.onClick(() => tg.close());
         tg.MainButton.show();
         document.getElementById('closeBtn').addEventListener('click', () => tg.close());
 
-        // Кнопка старта
         document.getElementById('startBtn').addEventListener('click', () => {
-            // Если аудио ещё не загружено или сброшено, загружаем
             if (!audio.src || audio.src === "") {
                 loadTrack();
             }
             startPlayback();
         });
 
-        // Инициализация (загружаем трек, но не играем)
         loadTrack();
     </script>
 </body>
