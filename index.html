@@ -7,9 +7,25 @@
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
     <style>
         body {
-            background-color: #000000;
-            background-image: radial-gradient(#0f3a0f 1px, #000000 1px);
-            background-size: 40px 40px;
+            /* Фоновое изображение (пиксельная картинка) */
+            background-image: url('https://raw.githubusercontent.com/giorg19851-lgtm/countryboys_fm.github.io/main/fm.png');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+            background-attachment: fixed;
+            
+            /* Затемнение для читаемости текста */
+            background-color: rgba(0, 0, 0, 0.7);
+            background-blend-mode: multiply;
+            
+            /* Пиксельный рендеринг (отключает сглаживание) */
+            image-rendering: pixelated;
+            image-rendering: crisp-edges; /* для старых браузеров */
+            
+            /* Цветокоррекция для ретро-эффекта */
+            filter: brightness(110%) contrast(130%) saturate(140%) sepia(5%);
+            
+            /* Базовые стили текста */
             font-family: 'VT323', monospace;
             color: #88ff88;
             margin: 0;
@@ -20,8 +36,10 @@
             min-height: 100vh;
             box-sizing: border-box;
         }
+        
+        /* Карточка плеера – полупрозрачная, чтобы фон просвечивал */
         .player-card {
-            background: #000000cc;
+            background: #000000aa; /* чуть темнее для контраста */
             border: 3px solid #88ff88;
             border-radius: 0px;
             padding: 20px;
@@ -31,6 +49,7 @@
             box-shadow: 0 0 20px #88ff88;
             backdrop-filter: blur(2px);
         }
+        
         h1 {
             font-family: 'Press Start 2P', monospace;
             font-size: 18px;
@@ -39,6 +58,7 @@
             margin-bottom: 20px;
             letter-spacing: 2px;
         }
+        
         .subtitle {
             font-family: 'VT323', monospace;
             font-size: 18px;
@@ -49,6 +69,7 @@
             padding: 5px 0;
             margin-bottom: 20px;
         }
+        
         .status {
             font-family: 'VT323', monospace;
             font-size: 20px;
@@ -58,21 +79,25 @@
             margin: 20px auto;
             width: fit-content;
         }
+        
         .footer {
             font-family: 'VT323', monospace;
             font-size: 14px;
             color: #88ff88aa;
             margin-top: 20px;
         }
+        
         .blinking-cursor {
             display: inline-block;
             width: 10px;
             animation: blink 1s step-end infinite;
         }
+        
         @keyframes blink {
             0%, 100% { opacity: 1; }
             50% { opacity: 0; }
         }
+        
         button {
             background: #000000;
             border: 2px solid #88ff88;
@@ -83,6 +108,7 @@
             cursor: pointer;
             margin-top: 15px;
         }
+        
         button:active {
             background: #88ff88;
             color: #000000;
@@ -100,7 +126,7 @@
         </audio>
         
         <div class="status" id="playbackStatus">
-            🎵 ИГРАЕТ: НЕИЗВЕСТЕН- БЕЗ НАЗВАНИЯ <span class="blinking-cursor">_</span>
+            🎵 ИГРАЕТ: НЕИЗВЕСТЕН - БЕЗ НАЗВАНИЯ <span class="blinking-cursor">_</span>
         </div>
         <div class="footer">
             выключи эту хуйню ❤️
@@ -112,11 +138,6 @@
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        
-        // Применяем тему Telegram (можно оставить, но в ретро-стиле лучше переопределить)
-        // Чтобы не портить стиль, закомментируем авто-тему:
-        // document.body.style.backgroundColor = tg.themeParams.bg_color;
-        // document.body.style.color = tg.themeParams.text_color;
         
         // Настройка кнопки "Закрыть"
         tg.MainButton.setText("ЗАКРЫТЬ");
@@ -137,7 +158,7 @@
         // Принудительное автовоспроизведение с обходом блокировки
         function attemptPlay() {
             audio.play().catch(() => {
-                // Ждём первого касания
+                // Ждём первого касания или клика
                 const playOnInteraction = () => {
                     audio.play();
                     document.body.removeEventListener('touchstart', playOnInteraction);
@@ -152,21 +173,17 @@
             attemptPlay();
         });
         
-        // Обновление статуса (опционально, но можно убрать, так как статус статичный)
         if (audio) {
             audio.addEventListener('play', () => {
-                statusDiv.innerHTML = '🎵 ИГРАЕТ: НЕИЗВЕСТЕН- БЕЗ НАЗВАНИЯ <span class="blinking-cursor">_</span>';
+                statusDiv.innerHTML = '🎵 ИГРАЕТ: НЕИЗВЕСТЕН - БЕЗ НАЗВАНИЯ <span class="blinking-cursor">_</span>';
             });
             audio.addEventListener('pause', () => {
-                // Не даём пользователю поставить на паузу — но скрытый плеер не позволяет этого сделать без кода.
-                // Если вдруг остановилось, попробуем снова играть.
                 setTimeout(() => { audio.play(); }, 100);
             });
             audio.addEventListener('ended', () => {
-                // Для радио сет может быть длинным, но если закончился — можно зациклить
                 audio.currentTime = 0;
                 audio.play();
-                statusDiv.innerHTML = '🔄 ПОВТОР: ДИДЖЕЙ-СЕТ <span class="blinking-cursor">_</span>';
+                statusDiv.innerHTML = '🔄 ПОВТОР: СЛЫШАТЬ <span class="blinking-cursor">_</span>';
             });
         }
     </script>
