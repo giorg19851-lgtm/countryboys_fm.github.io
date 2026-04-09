@@ -23,7 +23,6 @@
             overflow: hidden;
         }
 
-        /* Контейнер-пластинка (круг) */
         .vinyl {
             position: relative;
             width: 90vw;
@@ -34,7 +33,6 @@
             box-shadow: 0 0 20px rgba(255,255,255,0.3);
         }
 
-        /* Видео-фон (вращается) */
         .vinyl-video {
             position: absolute;
             top: 0;
@@ -54,7 +52,6 @@
             animation: spin 4s linear infinite;
         }
 
-        /* Чёрное отверстие в центре (вращается вместе с видео) */
         .vinyl-video::after {
             content: "";
             position: absolute;
@@ -69,7 +66,6 @@
             pointer-events: none;
         }
 
-        /* Слой с кнопками и текстом — прямо на пластинке */
         .vinyl-controls {
             position: absolute;
             top: 50%;
@@ -82,33 +78,31 @@
             background: transparent;
         }
 
-        h1 {
+        /* Единый размер шрифта для всех текстовых элементов */
+        h1, .status, button {
             font-family: 'Press Start 2P', monospace;
-            font-weight: normal;
-            font-size: 24px;  /* Увеличено в 2 раза (было 12) */
-            margin-bottom: 20px;
-            letter-spacing: 2px;
+            font-size: 16px;  /* одинаковый размер */
             color: white;
+        }
+
+        h1 {
+            font-weight: normal;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
             text-shadow: 2px 2px 0 black, 0 0 8px rgba(0,0,0,0.8);
-            word-break: break-word;
             line-height: 1.4;
         }
 
         .status {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 16px;  /* было 8 -> 16 */
             background: rgba(0,0,0,0.5);
             border: 2px solid white;
             padding: 12px 20px;
-            margin: 20px auto;
             display: inline-block;
             backdrop-filter: blur(2px);
-            letter-spacing: 1px;
-            color: white;
+            margin-bottom: 20px; /* одинаковый отступ снизу, как у h1 */
         }
 
         .controls {
-            margin: 25px 0 15px;
             display: flex;
             justify-content: center;
             gap: 15px;
@@ -116,12 +110,9 @@
         }
 
         button {
-            font-family: 'Press Start 2P', monospace;
             background: rgba(0,0,0,0.7);
             border: 2px solid white;
-            font-size: 14px;  /* было 8 -> 16, но чуть меньше для кнопок */
             padding: 10px 18px;
-            color: white;
             cursor: pointer;
             backdrop-filter: blur(2px);
             transition: 0.05s linear;
@@ -130,8 +121,6 @@
             background: white;
             color: black;
         }
-
-        /* Убрали footer */
 
         .blinking-cursor {
             display: inline-block;
@@ -143,7 +132,6 @@
             50% { opacity: 0; }
         }
 
-        /* Эффект для мерцающих букв */
         .glitch-letter {
             display: inline-block;
             transition: opacity 0.05s ease;
@@ -173,7 +161,6 @@
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
-    // ---------- АНИМАЦИЯ "ВЫКЛЮЧАЮЩИХСЯ БУКВ" (РЕДКО) ----------
     let glitchIntervals = [];
 
     function stopAllGlitch() {
@@ -196,7 +183,6 @@
         const spansList = element.querySelectorAll('.glitch-letter');
         if (spansList.length === 0) return;
         
-        // Редкое мерцание: интервал от 1500 до 3000 мс
         const interval = setInterval(() => {
             const randomIndex = Math.floor(Math.random() * spansList.length);
             const letter = spansList[randomIndex];
@@ -229,7 +215,6 @@
         }
     }
 
-    // Динамический статус с мерцанием
     function updateStatusText(newText) {
         const statusDiv = document.getElementById('playbackStatus');
         if (!statusDiv) return;
@@ -255,7 +240,6 @@
         }
     }
 
-    // ---------- ОСНОВНАЯ ЛОГИКА РАДИО ----------
     const audioUrl = "https://videotourl.com/audio/1775763278412-e5f55dc7-1efc-4948-9f59-cb84416861e2.mp3";
 
     const audio = document.getElementById('radioPlayer');
@@ -335,8 +319,8 @@
     window.addEventListener('beforeunload', () => savePosition());
 
     tg.expand();
-    tg.MainButton.hide(); // скрываем стандартную кнопку, т.к. у нас есть своя "НЕ СЛЫШАТЬ"
-    
+    tg.MainButton.hide();
+
     document.getElementById('startBtn').addEventListener('click', () => {
         if (!audio.src || audio.src === "") {
             loadTrack();
