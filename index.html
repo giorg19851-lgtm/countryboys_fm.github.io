@@ -75,7 +75,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 80%;
+            width: 85%;
             text-align: center;
             z-index: 10;
             pointer-events: auto;
@@ -85,39 +85,44 @@
         h1 {
             font-family: 'Press Start 2P', monospace;
             font-weight: normal;
-            font-size: 12px;
-            margin-bottom: 12px;
-            letter-spacing: 1px;
+            font-size: 24px;  /* Увеличено в 2 раза (было 12) */
+            margin-bottom: 20px;
+            letter-spacing: 2px;
             color: white;
-            text-shadow: 1px 1px 0 black, 0 0 8px rgba(0,0,0,0.8);
+            text-shadow: 2px 2px 0 black, 0 0 8px rgba(0,0,0,0.8);
             word-break: break-word;
+            line-height: 1.4;
         }
 
         .status {
             font-family: 'Press Start 2P', monospace;
-            font-size: 8px;
+            font-size: 16px;  /* было 8 -> 16 */
             background: rgba(0,0,0,0.5);
-            border: 1px solid white;
-            padding: 6px 10px;
-            margin: 8px auto;
+            border: 2px solid white;
+            padding: 12px 20px;
+            margin: 20px auto;
             display: inline-block;
             backdrop-filter: blur(2px);
-            letter-spacing: 0px;
+            letter-spacing: 1px;
+            color: white;
         }
 
         .controls {
-            margin: 12px 0;
+            margin: 25px 0 15px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
         }
 
         button {
             font-family: 'Press Start 2P', monospace;
             background: rgba(0,0,0,0.7);
-            border: 1px solid white;
-            font-size: 8px;
-            padding: 6px 12px;
+            border: 2px solid white;
+            font-size: 14px;  /* было 8 -> 16, но чуть меньше для кнопок */
+            padding: 10px 18px;
             color: white;
             cursor: pointer;
-            margin: 5px;
             backdrop-filter: blur(2px);
             transition: 0.05s linear;
         }
@@ -126,17 +131,11 @@
             color: black;
         }
 
-        .footer {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 7px;
-            margin-top: 10px;
-            color: #ccc;
-            text-shadow: 1px 1px 0 black;
-        }
+        /* Убрали footer */
 
         .blinking-cursor {
             display: inline-block;
-            width: 8px;
+            width: 12px;
             animation: blink 1s step-end infinite;
         }
         @keyframes blink {
@@ -161,12 +160,12 @@
     </video>
     <div class="vinyl-controls">
         <h1 id="glitchTitle">COUNTRY BOYS FM</h1>
-        <div class="status" id="playbackStatus">НАЖМИ ЧТОБЫ СЛЫШАТЬ</div>
+        <div class="status" id="playbackStatus">НАЖМИ СЛЫШАТЬ</div>
         <div class="controls">
-            <button id="startBtn">ЖМЯК</button>
+            <button id="startBtn">СЛЫШАТЬ</button>
+            <button id="pauseBtn">ПАУЗА</button>
+            <button id="closeBtn">НЕ СЛЫШАТЬ</button>
         </div>
-        <div class="footer" id="glitchFooter">выключи эту хуйню</div>
-        <button id="closeBtn">НЕ СЛЫШАТЬ</button>
     </div>
 </div>
 
@@ -197,7 +196,7 @@
         const spansList = element.querySelectorAll('.glitch-letter');
         if (spansList.length === 0) return;
         
-        // РЕДКОЕ мерцание: интервал от 1500 до 3000 мс
+        // Редкое мерцание: интервал от 1500 до 3000 мс
         const interval = setInterval(() => {
             const randomIndex = Math.floor(Math.random() * spansList.length);
             const letter = spansList[randomIndex];
@@ -205,21 +204,23 @@
             letter.classList.add('off');
             setTimeout(() => {
                 letter.classList.remove('off');
-            }, 200); // буква выключена на 200 мс
-        }, Math.random() * 1500 + 1500); // 1500-3000 мс
+            }, 200);
+        }, Math.random() * 1500 + 1500);
         glitchIntervals.push(interval);
     }
 
-    // Применяем к статическим элементам
     function applyGlitchToStatic() {
         const title = document.getElementById('glitchTitle');
-        const footer = document.getElementById('glitchFooter');
         if (title) applyGlitchToElement(title);
-        if (footer) applyGlitchToElement(footer);
         const startBtn = document.getElementById('startBtn');
         if (startBtn && !startBtn.hasGlitch) {
             applyGlitchToElement(startBtn);
             startBtn.hasGlitch = true;
+        }
+        const pauseBtn = document.getElementById('pauseBtn');
+        if (pauseBtn && !pauseBtn.hasGlitch) {
+            applyGlitchToElement(pauseBtn);
+            pauseBtn.hasGlitch = true;
         }
         const closeBtn = document.getElementById('closeBtn');
         if (closeBtn && !closeBtn.hasGlitch) {
@@ -228,7 +229,7 @@
         }
     }
 
-    // Динамический статус с мерцанием (редко)
+    // Динамический статус с мерцанием
     function updateStatusText(newText) {
         const statusDiv = document.getElementById('playbackStatus');
         if (!statusDiv) return;
@@ -275,7 +276,7 @@
             audio.currentTime = parseFloat(savedTime);
             const mins = Math.floor(parseFloat(savedTime) / 60);
             const secs = Math.floor(parseFloat(savedTime) % 60).toString().padStart(2,'0');
-            updateStatusText(`⏸ ТАЙМКОД (${mins}:${secs})`);
+            updateStatusText(`ТАЙМКОД ${mins}:${secs}`);
         } else {
             audio.currentTime = 0;
             updateStatusText(`НАЖМИ СЛЫШАТЬ`);
@@ -296,9 +297,19 @@
             updateStatusText(`СЛЫШИШЬ?`);
             startSpinning();
         }).catch((err) => {
-            updateStatusText(`❌ ОШИБКА`);
+            updateStatusText(`ОШИБКА`);
             console.error(err);
         });
+    }
+
+    function pausePlayback() {
+        audio.pause();
+        updateStatusText(`ПАУЗА`);
+        stopSpinning();
+    }
+
+    function closeApp() {
+        tg.close();
     }
 
     audio.addEventListener('play', () => {
@@ -306,13 +317,13 @@
         startSpinning();
     });
     audio.addEventListener('pause', () => {
-        updateStatusText(`⏸ ПАУЗА (нажми СТАРТ)`);
+        updateStatusText(`ПАУЗА`);
         stopSpinning();
     });
     audio.addEventListener('ended', () => {
         audio.currentTime = 0;
         localStorage.setItem('radio_position', 0);
-        updateStatusText(`FIN (СТАРТ заново)`);
+        updateStatusText(`КОНЕЦ (ЖМИ СЛЫШАТЬ)`);
         stopSpinning();
     });
 
@@ -324,16 +335,19 @@
     window.addEventListener('beforeunload', () => savePosition());
 
     tg.expand();
-    tg.MainButton.setText("ЗАКРЫТЬ");
-    tg.MainButton.onClick(() => tg.close());
-    tg.MainButton.show();
-    document.getElementById('closeBtn').addEventListener('click', () => tg.close());
-
+    tg.MainButton.hide(); // скрываем стандартную кнопку, т.к. у нас есть своя "НЕ СЛЫШАТЬ"
+    
     document.getElementById('startBtn').addEventListener('click', () => {
         if (!audio.src || audio.src === "") {
             loadTrack();
         }
         startPlayback();
+    });
+    document.getElementById('pauseBtn').addEventListener('click', () => {
+        pausePlayback();
+    });
+    document.getElementById('closeBtn').addEventListener('click', () => {
+        closeApp();
     });
 
     loadTrack();
