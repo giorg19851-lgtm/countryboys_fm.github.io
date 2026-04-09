@@ -19,7 +19,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-family: 'Press Start 2P', monospace;
+            font-family: 'VT323', monospace; /* более тонкий шрифт */
             overflow: hidden;
         }
 
@@ -75,20 +75,17 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 70%;
+            width: 80%;
             text-align: center;
             z-index: 10;
             pointer-events: auto;
-            /* Убираем фон, границу, блюр */
             background: transparent;
-            backdrop-filter: none;
-            border: none;
-            border-radius: 0;
-            padding: 0;
         }
 
         h1 {
-            font-size: 14px;
+            font-family: 'Press Start 2P', monospace;
+            font-weight: 100;  /* делаем тоньше */
+            font-size: 12px;
             margin-bottom: 12px;
             letter-spacing: 1px;
             color: white;
@@ -97,15 +94,15 @@
         }
 
         .status {
-            font-size: 10px;
+            font-family: 'VT323', monospace;
+            font-size: 14px;
             background: rgba(0,0,0,0.5);
             border: 1px solid white;
-            padding: 6px;
-            margin: 8px 0;
-            font-family: 'Press Start 2P', monospace;
-            color: white;
+            padding: 6px 10px;
+            margin: 8px auto;
             display: inline-block;
             backdrop-filter: blur(2px);
+            letter-spacing: 1px;
         }
 
         .controls {
@@ -115,13 +112,14 @@
         button {
             background: rgba(0,0,0,0.7);
             border: 1px solid white;
-            font-family: 'Press Start 2P', monospace;
-            font-size: 10px;
+            font-family: 'VT323', monospace;
+            font-size: 14px;
             padding: 6px 12px;
             color: white;
             cursor: pointer;
             margin: 5px;
             backdrop-filter: blur(2px);
+            transition: 0.05s linear;
         }
         button:active {
             background: white;
@@ -129,7 +127,8 @@
         }
 
         .footer {
-            font-size: 8px;
+            font-family: 'VT323', monospace;
+            font-size: 10px;
             margin-top: 10px;
             color: #ccc;
             text-shadow: 1px 1px 0 black;
@@ -144,6 +143,15 @@
             0%, 100% { opacity: 1; }
             50% { opacity: 0; }
         }
+
+        /* Эффект для мерцающих букв */
+        .glitch-letter {
+            display: inline-block;
+            transition: opacity 0.05s ease;
+        }
+        .glitch-letter.off {
+            opacity: 0;
+        }
     </style>
 </head>
 <body>
@@ -152,12 +160,12 @@
         <source src="https://github.com/giorg19851-lgtm/countryboys_fm.github.io/raw/refs/heads/main/document_5386562835193042585.mp4" type="video/mp4">
     </video>
     <div class="vinyl-controls">
-        <h1>COUNTRY BOYS FM</h1>
+        <h1 id="glitchTitle">COUNTRY BOYS FM</h1>
         <div class="status" id="playbackStatus">НАЖМИ ЧТОБЫ СЛЫШАТЬ</div>
         <div class="controls">
             <button id="startBtn">ЖМЯК</button>
         </div>
-        <div class="footer">выключи эту хуйню</div>
+        <div class="footer" id="glitchFooter">выключи эту хуйню</div>
         <button id="closeBtn">НЕ СЛЫШАТЬ</button>
     </div>
 </div>
@@ -166,10 +174,95 @@
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
+    // ---------- АНИМАЦИЯ "ВЫКЛЮЧАЮЩИХСЯ БУКВ" ----------
+    let glitchIntervals = [];
+
+    function stopAllGlitch() {
+        glitchIntervals.forEach(clearInterval);
+        glitchIntervals = [];
+    }
+
+    function applyGlitchToElement(element) {
+        if (!element) return;
+        const originalText = element.innerText;
+        if (!originalText) return;
+        
+        // Разбиваем текст на буквы и оборачиваем каждую в span
+        const letters = originalText.split('');
+        const spans = letters.map(char => {
+            if (char === ' ') return ' ';
+            return `<span class="glitch-letter">${char}</span>`;
+        });
+        element.innerHTML = spans.join('');
+        
+        const spansList = element.querySelectorAll('.glitch-letter');
+        if (spansList.length === 0) return;
+        
+        // Случайное мерцание для каждой буквы
+        const interval = setInterval(() => {
+            const randomIndex = Math.floor(Math.random() * spansList.length);
+            const letter = spansList[randomIndex];
+            if (!letter) return;
+            letter.classList.add('off');
+            setTimeout(() => {
+                letter.classList.remove('off');
+            }, 150);
+        }, Math.random() * 400 + 300); // 300-700 мс между мерцаниями
+        glitchIntervals.push(interval);
+    }
+
+    // Применяем к статическим элементам
+    function applyGlitchToStatic() {
+        const title = document.getElementById('glitchTitle');
+        const footer = document.getElementById('glitchFooter');
+        if (title) applyGlitchToElement(title);
+        if (footer) applyGlitchToElement(footer);
+        // Кнопка "ЖМЯК" тоже может мерцать, но это необязательно
+        const startBtn = document.getElementById('startBtn');
+        if (startBtn && !startBtn.hasGlitch) {
+            applyGlitchToElement(startBtn);
+            startBtn.hasGlitch = true;
+        }
+        const closeBtn = document.getElementById('closeBtn');
+        if (closeBtn && !closeBtn.hasGlitch) {
+            applyGlitchToElement(closeBtn);
+            closeBtn.hasGlitch = true;
+        }
+    }
+
+    // Динамический статус с сохранением анимации
+    function updateStatusText(newText) {
+        const statusDiv = document.getElementById('playbackStatus');
+        if (!statusDiv) return;
+        // Сохраняем оригинальный текст без HTML-тегов
+        statusDiv.innerText = newText;
+        // Применяем эффект мерцания к каждой букве
+        const letters = newText.split('');
+        const spans = letters.map(char => {
+            if (char === ' ') return ' ';
+            return `<span class="glitch-letter">${char}</span>`;
+        });
+        statusDiv.innerHTML = spans.join('') + '<span class="blinking-cursor">_</span>';
+        
+        // Добавляем мерцание для новых букв
+        const spansList = statusDiv.querySelectorAll('.glitch-letter');
+        if (spansList.length > 0) {
+            const interval = setInterval(() => {
+                const randomIndex = Math.floor(Math.random() * spansList.length);
+                const letter = spansList[randomIndex];
+                if (letter) {
+                    letter.classList.add('off');
+                    setTimeout(() => letter.classList.remove('off'), 150);
+                }
+            }, Math.random() * 400 + 300);
+            glitchIntervals.push(interval);
+        }
+    }
+
+    // ---------- ОСНОВНАЯ ЛОГИКА РАДИО ----------
     const audioUrl = "https://videotourl.com/audio/1775763278412-e5f55dc7-1efc-4948-9f59-cb84416861e2.mp3";
 
     const audio = document.getElementById('radioPlayer');
-    const statusDiv = document.getElementById('playbackStatus');
     const vinylVideo = document.getElementById('vinylVideo');
     const tg = window.Telegram.WebApp;
 
@@ -187,10 +280,10 @@
             audio.currentTime = parseFloat(savedTime);
             const mins = Math.floor(parseFloat(savedTime) / 60);
             const secs = Math.floor(parseFloat(savedTime) % 60).toString().padStart(2,'0');
-            statusDiv.innerHTML = `⏸ ТАЙМКОД (${mins}:${secs})<span class="blinking-cursor">_</span>`;
+            updateStatusText(`⏸ ТАЙМКОД (${mins}:${secs})`);
         } else {
             audio.currentTime = 0;
-            statusDiv.innerHTML = `НАЖМИ СЛЫШАТЬ<span class="blinking-cursor">_</span>`;
+            updateStatusText(`НАЖМИ СЛЫШАТЬ`);
         }
     }
 
@@ -205,26 +298,26 @@
 
     function startPlayback() {
         audio.play().then(() => {
-            statusDiv.innerHTML = `СЛЫШИШЬ?<span class="blinking-cursor">_</span>`;
+            updateStatusText(`СЛЫШИШЬ?`);
             startSpinning();
         }).catch((err) => {
-            statusDiv.innerHTML = `❌ ОШИБКА<span class="blinking-cursor">_</span>`;
+            updateStatusText(`❌ ОШИБКА`);
             console.error(err);
         });
     }
 
     audio.addEventListener('play', () => {
-        statusDiv.innerHTML = `СЛЫШИШЬ?<span class="blinking-cursor">_</span>`;
+        updateStatusText(`СЛЫШИШЬ?`);
         startSpinning();
     });
     audio.addEventListener('pause', () => {
-        statusDiv.innerHTML = `⏸ ПАУЗА (нажми СТАРТ)<span class="blinking-cursor">_</span>`;
+        updateStatusText(`⏸ ПАУЗА (нажми СТАРТ)`);
         stopSpinning();
     });
     audio.addEventListener('ended', () => {
         audio.currentTime = 0;
         localStorage.setItem('radio_position', 0);
-        statusDiv.innerHTML = `FIN (СТАРТ заново)<span class="blinking-cursor">_</span>`;
+        updateStatusText(`FIN (СТАРТ заново)`);
         stopSpinning();
     });
 
@@ -248,12 +341,16 @@
         startPlayback();
     });
 
+    // Запуск
     loadTrack();
     if (audio.currentTime > 0 && !audio.paused) {
         startSpinning();
     } else {
         stopSpinning();
     }
+    
+    // Применяем анимацию к статическим элементам (заголовок, футер, кнопки)
+    applyGlitchToStatic();
 </script>
 </body>
 </html>
