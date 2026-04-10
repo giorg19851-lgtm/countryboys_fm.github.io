@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Vinyl Radio</title>
+    <title>Vinyl Selector</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         * {
@@ -21,37 +21,26 @@
             align-items: center;
             font-family: 'Press Start 2P', monospace;
             overflow: hidden;
+            position: relative;
         }
 
-        /* Лобби */
+        /* Контейнер с кнопками */
         .lobby {
             text-align: center;
             width: 90%;
             max-width: 600px;
             z-index: 2;
-            transition: opacity 0.3s ease;
         }
-        .lobby.hidden {
-            display: none;
-        }
-        .lobby h1 {
-            font-size: 32px;
-            color: white;
-            text-shadow: 0 0 10px rgba(255,255,255,0.5);
-            margin-bottom: 50px;
-            letter-spacing: 4px;
-            animation: pulse 2s ease-in-out infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 0.8; text-shadow: 0 0 5px white; }
-            50% { opacity: 1; text-shadow: 0 0 20px white; }
-        }
+
+        /* Контейнер для двух пластинок */
         .vinyl-selector {
             display: flex;
             justify-content: center;
             gap: 40px;
             flex-wrap: wrap;
         }
+
+        /* Стиль кнопки-пластинки */
         .vinyl-button {
             background: none;
             border: none;
@@ -59,13 +48,17 @@
             transition: transform 0.2s ease, filter 0.2s ease;
             filter: drop-shadow(0 0 15px rgba(255,255,255,0.3));
         }
+
         .vinyl-button:hover {
             transform: scale(1.05);
             filter: drop-shadow(0 0 25px rgba(255,255,255,0.6));
         }
+
         .vinyl-button:active {
             transform: scale(0.98);
         }
+
+        /* Сама пластинка (круг с картинкой) */
         .vinyl-disc {
             width: 180px;
             height: 180px;
@@ -76,11 +69,10 @@
             position: relative;
             margin-bottom: 15px;
             box-shadow: 0 0 20px rgba(255,255,255,0.2);
+            transition: box-shadow 0.2s;
         }
-        /* Инверсия для левого диска */
-        .vinyl-disc.inverted {
-            filter: invert(1);
-        }
+
+        /* Чёрное отверстие в центре */
         .vinyl-disc::after {
             content: "";
             position: absolute;
@@ -93,6 +85,8 @@
             transform: translate(-50%, -50%);
             box-shadow: 0 0 0 2px white;
         }
+
+        /* Подпись под кнопкой */
         .vinyl-label {
             font-family: 'Press Start 2P', monospace;
             font-size: 12px;
@@ -104,302 +98,67 @@
             display: inline-block;
             backdrop-filter: blur(4px);
         }
+
+        /* Скрытый аудиоплеер для лобби */
+        #lobbyAudio {
+            display: none;
+        }
+
+        /* Адаптивность */
         @media (max-width: 500px) {
-            .lobby h1 { font-size: 24px; margin-bottom: 30px; }
             .vinyl-disc { width: 130px; height: 130px; }
             .vinyl-label { font-size: 9px; }
             .vinyl-selector { gap: 20px; }
-        }
-
-        /* Основной плеер */
-        .player {
-            position: relative;
-            width: 90vw;
-            max-width: 500px;
-            aspect-ratio: 1 / 1;
-            border-radius: 50%;
-            overflow: hidden;
-            box-shadow: 0 0 20px rgba(255,255,255,0.3);
-            transition: opacity 0.3s ease;
-        }
-        .player.hidden {
-            display: none;
-        }
-        .vinyl-video {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 50%;
-            pointer-events: none;
-        }
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        .vinyl-video.spinning {
-            animation: spin 4s linear infinite;
-        }
-        .vinyl-video::after {
-            content: "";
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 12%;
-            height: 12%;
-            background: black;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 0 0 2px white;
-            pointer-events: none;
-        }
-        .player-controls {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 85%;
-            text-align: center;
-            z-index: 10;
-            pointer-events: auto;
-            background: transparent;
-        }
-        .player-controls h1 {
-            font-size: 14px;
-            margin-bottom: 16px;
-            color: white;
-            text-shadow: 2px 2px 0 black;
-        }
-        .status {
-            font-size: 14px;
-            background: rgba(0,0,0,0.5);
-            border: 2px solid white;
-            padding: 10px 16px;
-            display: inline-block;
-            backdrop-filter: blur(2px);
-            margin-bottom: 16px;
-            color: white;
-            font-family: 'Press Start 2P', monospace;
-        }
-        .controls {
-            display: flex;
-            justify-content: center;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-        .controls button {
-            background: rgba(0,0,0,0.7);
-            border: 2px solid white;
-            font-family: 'Press Start 2P', monospace;
-            font-size: 12px;
-            padding: 8px 16px;
-            color: white;
-            cursor: pointer;
-            backdrop-filter: blur(2px);
-        }
-        .controls button:active {
-            background: white;
-            color: black;
-        }
-        .blinking-cursor {
-            display: inline-block;
-            width: 10px;
-            animation: blink 1s step-end infinite;
-        }
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
-        }
-        .glitch-letter {
-            display: inline-block;
-            transition: opacity 0.05s ease;
-        }
-        .glitch-letter.off {
-            opacity: 0;
         }
     </style>
 </head>
 <body>
 
-<!-- ЛОББИ -->
-<div id="lobby" class="lobby">
-    <h1>ВЫБИРАЙ</h1>
+<div class="lobby">
     <div class="vinyl-selector">
-        <!-- Левая кнопка (инверсия) -->
-        <button class="vinyl-button" id="maketBtn">
-            <div class="vinyl-disc inverted" style="background-image: url('https://raw.githubusercontent.com/giorg19851-lgtm/countryboys_fm.github.io/main/fm.png');"></div>
-            <div class="vinyl-label">1</div>
+        <!-- Левая кнопка: bathroom pov -->
+        <button class="vinyl-button" id="bathroomBtn">
+            <div class="vinyl-disc" style="background-image: url('https://raw.githubusercontent.com/giorg19851-lgtm/countryboys_fm.github.io/main/fm.png');"></div>
+            <div class="vinyl-label">bathroom pov</div>
         </button>
-        <!-- Правая кнопка (без инверсии) -->
+
+        <!-- Правая кнопка: for when the oxxy bussin -->
         <button class="vinyl-button" id="djsetBtn">
             <div class="vinyl-disc" style="background-image: url('https://raw.githubusercontent.com/giorg19851-lgtm/countryboys_fm.github.io/main/fm.png');"></div>
-            <div class="vinyl-label">2</div>
+            <div class="vinyl-label">for when the oxxy bussin</div>
         </button>
     </div>
 </div>
 
-<!-- ОСНОВНОЙ ПЛЕЕР (без инверсии) -->
-<div id="player" class="player hidden">
-    <video class="vinyl-video" id="vinylVideo" loop muted playsinline>
-        <source src="https://github.com/giorg19851-lgtm/countryboys_fm.github.io/raw/refs/heads/main/document_5386562835193042585.mp4" type="video/mp4">
-    </video>
-    <div class="player-controls">
-        <h1>COUNTRY BOYS FM</h1>
-        <div class="status" id="playbackStatus">НАЖМИ СЛЫШАТЬ</div>
-        <div class="controls">
-            <button id="startBtn">СЛЫШАТЬ</button>
-            <button id="pauseBtn">ПАУЗА</button>
-            <button id="closeBtn">НЕ СЛЫШАТЬ</button>
-        </div>
-    </div>
-</div>
+<!-- Фоновая музыка для лобби (трек для левой пластинки) -->
+<audio id="lobbyAudio" autoplay loop>
+    <source src="https://videotourl.com/audio/1775784829266-243b505c-ea49-499c-a8cf-fb8b3d856300.mp3" type="audio/mpeg">
+</audio>
 
-<audio id="lobbyAudio" loop></audio>
-<audio id="maketAudio" loop></audio>
-<audio id="radioPlayer" style="display: none;" preload="auto"></audio>
-
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
-    // Ссылки на музыку
-    const LOBBY_MUSIC_URL = "https://image2url.com/r2/default/audio/1775781111930-526b21fb-d872-4a73-a9f8-acfcc4264107.mp3";
-    const DJ_SET_URL = "https://videotourl.com/audio/1775763278412-e5f55dc7-1efc-4948-9f59-cb84416861e2.mp3";
-    const MAKET_MUSIC_URL = "PLACEHOLDER_MAKET_MUSIC_URL";  // замените позже
-
-    // DOM элементы
-    const lobbyDiv = document.getElementById('lobby');
-    const playerDiv = document.getElementById('player');
+    // Получаем элементы
     const lobbyAudio = document.getElementById('lobbyAudio');
-    const maketAudio = document.getElementById('maketAudio');
-    const radioAudio = document.getElementById('radioPlayer');
-    const vinylVideo = document.getElementById('vinylVideo');
-    const statusDiv = document.getElementById('playbackStatus');
-    const tg = window.Telegram.WebApp;
+    const bathroomBtn = document.getElementById('bathroomBtn');
+    const djsetBtn = document.getElementById('djsetBtn');
 
-    // ---------- Плеер (диджей-сет) ----------
-    let glitchIntervals = [];
+    // URL вашего основного плеера с диджей-сетом
+    const DJ_SET_URL = "https://giorg19851-lgtm.github.io/countryboys_fm.github.io/";
 
-    function stopAllGlitch() {
-        glitchIntervals.forEach(clearInterval);
-        glitchIntervals = [];
-    }
-
-    function applyGlitchToElement(element) {
-        if (!element) return;
-        const originalText = element.innerText;
-        if (!originalText) return;
-        const letters = originalText.split('');
-        const spans = letters.map(ch => ch === ' ' ? ' ' : `<span class="glitch-letter">${ch}</span>`);
-        element.innerHTML = spans.join('');
-        const spansList = element.querySelectorAll('.glitch-letter');
-        if (!spansList.length) return;
-        const interval = setInterval(() => {
-            const idx = Math.floor(Math.random() * spansList.length);
-            const letter = spansList[idx];
-            if (letter) {
-                letter.classList.add('off');
-                setTimeout(() => letter.classList.remove('off'), 200);
-            }
-        }, Math.random() * 1500 + 1500);
-        glitchIntervals.push(interval);
-    }
-
-    function updateStatusText(newText) {
-        if (!statusDiv) return;
-        statusDiv.innerText = newText;
-        const letters = newText.split('');
-        const spans = letters.map(ch => ch === ' ' ? ' ' : `<span class="glitch-letter">${ch}</span>`);
-        statusDiv.innerHTML = spans.join('') + '<span class="blinking-cursor">_</span>';
-        const spansList = statusDiv.querySelectorAll('.glitch-letter');
-        if (spansList.length) {
-            const interval = setInterval(() => {
-                const idx = Math.floor(Math.random() * spansList.length);
-                const letter = spansList[idx];
-                if (letter) {
-                    letter.classList.add('off');
-                    setTimeout(() => letter.classList.remove('off'), 200);
-                }
-            }, Math.random() * 1500 + 1500);
-            glitchIntervals.push(interval);
-        }
-    }
-
-    function savePosition() {
-        if (radioAudio && !isNaN(radioAudio.currentTime) && radioAudio.currentTime > 0) {
-            localStorage.setItem('radio_position', radioAudio.currentTime);
-        }
-    }
-
-    function loadTrack() {
-        radioAudio.src = DJ_SET_URL;
-        radioAudio.load();
-        const savedTime = localStorage.getItem('radio_position');
-        if (savedTime && !isNaN(parseFloat(savedTime))) {
-            radioAudio.currentTime = parseFloat(savedTime);
-            const mins = Math.floor(parseFloat(savedTime) / 60);
-            const secs = Math.floor(parseFloat(savedTime) % 60).toString().padStart(2,'0');
-            updateStatusText(`ТАЙМКОД ${mins}:${secs}`);
-        } else {
-            radioAudio.currentTime = 0;
-            updateStatusText(`НАЖМИ СЛЫШАТЬ`);
-        }
-    }
-
-    function startSpinning() {
-        vinylVideo.classList.add('spinning');
-        vinylVideo.play().catch(e => console.log("video play", e));
-    }
-    function stopSpinning() {
-        vinylVideo.classList.remove('spinning');
-        vinylVideo.pause();
-    }
-
-    function startPlayback() {
-        radioAudio.play().then(() => {
-            updateStatusText(`СЛЫШИШЬ?`);
-            startSpinning();
-        }).catch(() => updateStatusText(`ОШИБКА`));
-    }
-    function pausePlayback() {
-        radioAudio.pause();
-        updateStatusText(`ПАУЗА`);
-        stopSpinning();
-    }
-    function closePlayer() {
-        tg.close();
-    }
-
-    radioAudio.addEventListener('play', () => {
-        updateStatusText(`СЛЫШИШЬ?`);
-        startSpinning();
+    // Обработчик для левой кнопки "bathroom pov" — ничего не делает, просто играет фоновая музыка
+    bathroomBtn.addEventListener('click', () => {
+        console.log("bathroom pov нажата");
+        // Можно добавить всплывашку, но не обязательно
+        alert("Это демо-режим. Вторая пластинка ведёт на радио.");
     });
-    radioAudio.addEventListener('pause', () => {
-        updateStatusText(`ПАУЗА`);
-        stopSpinning();
-    });
-    radioAudio.addEventListener('ended', () => {
-        radioAudio.currentTime = 0;
-        localStorage.setItem('radio_position', 0);
-        updateStatusText(`КОНЕЦ (ЖМИ СЛЫШАТЬ)`);
-        stopSpinning();
-    });
-    setInterval(() => {
-        if (radioAudio && !radioAudio.paused && !isNaN(radioAudio.currentTime)) savePosition();
-    }, 2000);
-    window.addEventListener('beforeunload', () => savePosition());
 
-    document.getElementById('startBtn')?.addEventListener('click', () => {
-        if (!radioAudio.src || radioAudio.src === "") loadTrack();
-        startPlayback();
+    // Обработчик для правой кнопки — переход на основной плеер
+    djsetBtn.addEventListener('click', () => {
+        lobbyAudio.pause(); // останавливаем музыку лобби
+        window.location.href = DJ_SET_URL; // переходим
     });
-    document.getElementById('pauseBtn')?.addEventListener('click', pausePlayback);
-    document.getElementById('closeBtn')?.addEventListener('click', closePlayer);
 
-    // ---------- Лобби ----------
-    function playLobbyMusic() {
-        lobbyAudio.src = LOBBY_MUSIC_URL;
-        lobbyAudio.loop = true;
+    // Боремся с автовоспроизведением (браузеры блокируют)
+    function attemptPlay() {
         lobbyAudio.play().catch(() => {
             const playOnInteraction = () => {
                 lobbyAudio.play();
@@ -410,57 +169,18 @@
             document.body.addEventListener('click', playOnInteraction);
         });
     }
+    window.addEventListener('load', attemptPlay);
 
-    function stopLobbyMusic() {
-        lobbyAudio.pause();
-        lobbyAudio.currentTime = 0;
-    }
-
-    function playMaketMusic() {
-        if (!MAKET_MUSIC_URL || MAKET_MUSIC_URL === "PLACEHOLDER_MAKET_MUSIC_URL") {
-            alert("Музыка для макета ещё не добавлена. Пришлите ссылку на MP3.");
-            return;
-        }
-        stopLobbyMusic();
-        maketAudio.pause();
-        maketAudio.currentTime = 0;
-        maketAudio.src = MAKET_MUSIC_URL;
-        maketAudio.loop = true;
-        maketAudio.play().catch(e => console.error("Ошибка воспроизведения макета:", e));
-    }
-
-    function switchToPlayer() {
-        stopLobbyMusic();
-        maketAudio.pause();
-        maketAudio.currentTime = 0;
-        lobbyDiv.classList.add('hidden');
-        playerDiv.classList.remove('hidden');
-        if (!radioAudio.src || radioAudio.src === "") loadTrack();
-        applyGlitchToElement(document.querySelector('#player .player-controls h1'));
-        ['startBtn', 'pauseBtn', 'closeBtn'].forEach(id => {
-            const btn = document.getElementById(id);
-            if (btn && !btn.hasGlitch) {
-                applyGlitchToElement(btn);
-                btn.hasGlitch = true;
-            }
+    // Анимация вращения пластинок при наведении
+    const discs = document.querySelectorAll('.vinyl-disc');
+    discs.forEach(disc => {
+        disc.style.transition = 'transform 0.3s linear';
+        disc.addEventListener('mouseenter', () => {
+            disc.style.transform = 'rotate(10deg) scale(1.02)';
         });
-        if (radioAudio.currentTime > 0 && !radioAudio.paused) startSpinning();
-        else stopSpinning();
-    }
-
-    document.getElementById('maketBtn')?.addEventListener('click', playMaketMusic);
-    document.getElementById('djsetBtn')?.addEventListener('click', switchToPlayer);
-
-    // Запуск
-    tg.expand();
-    tg.MainButton.hide();
-    playLobbyMusic();
-
-    window.addEventListener('resize', () => {
-        if (!playerDiv.classList.contains('hidden')) {
-            vinylVideo.style.display = 'none';
-            setTimeout(() => { vinylVideo.style.display = 'block'; }, 10);
-        }
+        disc.addEventListener('mouseleave', () => {
+            disc.style.transform = 'rotate(0deg) scale(1)';
+        });
     });
 </script>
 </body>
