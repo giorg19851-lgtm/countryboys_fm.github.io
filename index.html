@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Vinyl Selector</title>
+    <title>Vinyl Radio</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         * {
@@ -24,16 +24,22 @@
             position: relative;
         }
 
-        /* Контейнер с кнопками */
+        /* ========== ЛОББИ ========== */
         .lobby {
             text-align: center;
             width: 90%;
             max-width: 600px;
             z-index: 2;
+            transition: opacity 0.5s ease;
         }
 
-        /* Заголовок */
-        h1 {
+        .lobby.hidden {
+            opacity: 0;
+            pointer-events: none;
+            position: absolute;
+        }
+
+        .lobby h1 {
             font-size: 32px;
             color: white;
             text-shadow: 0 0 10px rgba(255,255,255,0.5);
@@ -47,7 +53,6 @@
             50% { opacity: 1; text-shadow: 0 0 20px white; }
         }
 
-        /* Контейнер для двух пластинок */
         .vinyl-selector {
             display: flex;
             justify-content: center;
@@ -55,7 +60,6 @@
             flex-wrap: wrap;
         }
 
-        /* Стиль кнопки-пластинки */
         .vinyl-button {
             background: none;
             border: none;
@@ -73,7 +77,6 @@
             transform: scale(0.98);
         }
 
-        /* Сама пластинка (круг с картинкой) */
         .vinyl-disc {
             width: 180px;
             height: 180px;
@@ -87,7 +90,6 @@
             transition: box-shadow 0.2s;
         }
 
-        /* Чёрное отверстие в центре */
         .vinyl-disc::after {
             content: "";
             position: absolute;
@@ -101,7 +103,6 @@
             box-shadow: 0 0 0 2px white;
         }
 
-        /* Подпись под кнопкой */
         .vinyl-label {
             font-family: 'Press Start 2P', monospace;
             font-size: 12px;
@@ -114,72 +115,319 @@
             backdrop-filter: blur(4px);
         }
 
-        /* Скрытый аудиоплеер для лобби */
-        #lobbyAudio {
-            display: none;
-        }
-
-        /* Адаптивность */
         @media (max-width: 500px) {
-            h1 { font-size: 24px; margin-bottom: 30px; }
+            .lobby h1 { font-size: 24px; margin-bottom: 30px; }
             .vinyl-disc { width: 130px; height: 130px; }
             .vinyl-label { font-size: 9px; }
             .vinyl-selector { gap: 20px; }
+        }
+
+        /* ========== ПЛЕЕР (радио) ========== */
+        .player {
+            position: relative;
+            width: 90vw;
+            max-width: 500px;
+            aspect-ratio: 1 / 1;
+            border-radius: 50%;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(255,255,255,0.3);
+            transition: opacity 0.5s ease;
+        }
+
+        .player.hidden {
+            opacity: 0;
+            pointer-events: none;
+            position: absolute;
+        }
+
+        .vinyl-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .vinyl-video.spinning {
+            animation: spin 4s linear infinite;
+        }
+
+        .vinyl-video::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 12%;
+            height: 12%;
+            background: black;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 0 2px white;
+            pointer-events: none;
+        }
+
+        .vinyl-controls {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 85%;
+            text-align: center;
+            z-index: 10;
+            pointer-events: auto;
+            background: transparent;
+        }
+
+        h2 {
+            font-size: 14px;
+            margin-bottom: 16px;
+            font-weight: normal;
+            letter-spacing: 1px;
+            color: white;
+            text-shadow: 2px 2px 0 black;
+            line-height: 1.4;
+        }
+
+        .status {
+            font-size: 14px;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid white;
+            padding: 10px 16px;
+            display: inline-block;
+            backdrop-filter: blur(2px);
+            margin-bottom: 16px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            font-family: 'Press Start 2P', monospace;
+            background: rgba(0,0,0,0.7);
+            border: 2px solid white;
+            font-size: 14px;
+            padding: 8px 16px;
+            color: white;
+            cursor: pointer;
+            backdrop-filter: blur(2px);
+            transition: 0.05s linear;
+        }
+        button:active {
+            background: white;
+            color: black;
+        }
+
+        .blinking-cursor {
+            display: inline-block;
+            width: 10px;
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .glitch-letter {
+            display: inline-block;
+            transition: opacity 0.05s ease;
+        }
+        .glitch-letter.off {
+            opacity: 0;
         }
     </style>
 </head>
 <body>
 
-<div class="lobby">
+<!-- ЛОББИ -->
+<div id="lobby" class="lobby">
     <h1>ВЫБИРАЙ</h1>
     <div class="vinyl-selector">
-        <!-- Кнопка 1: Макет (просто кнопка, ничего не делает, только музыка лобби) -->
         <button class="vinyl-button" id="mockupBtn">
             <div class="vinyl-disc" style="background-image: url('https://raw.githubusercontent.com/giorg19851-lgtm/countryboys_fm.github.io/main/fm.png');"></div>
-            <div class="vinyl-label">3</div>
+            <div class="vinyl-label">МАКЕТ</div>
         </button>
-
-        <!-- Кнопка 2: Переход на диджей-сет (ваш основной плеер) -->
         <button class="vinyl-button" id="djsetBtn">
             <div class="vinyl-disc" style="background-image: url('https://raw.githubusercontent.com/giorg19851-lgtm/countryboys_fm.github.io/main/fm.png');"></div>
-            <div class="vinyl-label">17</div>
+            <div class="vinyl-label">ДИДЖЕЙ СЕТ</div>
         </button>
     </div>
 </div>
 
-<!-- Фоновая музыка для лобби -->
-<audio id="lobbyAudio" autoplay loop>
+<!-- ПЛЕЕР (изначально скрыт) -->
+<div id="player" class="player hidden">
+    <video class="vinyl-video" id="vinylVideo" loop muted playsinline>
+        <source src="https://github.com/giorg19851-lgtm/countryboys_fm.github.io/raw/refs/heads/main/document_5386562835193042585.mp4" type="video/mp4">
+    </video>
+    <div class="vinyl-controls">
+        <h2>COUNTRY BOYS FM</h2>
+        <div class="status" id="playbackStatus">НАЖМИ СЛЫШАТЬ</div>
+        <div class="controls">
+            <button id="startBtn">СЛЫШАТЬ</button>
+            <button id="pauseBtn">ПАУЗА</button>
+            <button id="closeBtn">НЕ СЛЫШАТЬ</button>
+        </div>
+    </div>
+</div>
+
+<!-- Аудио для лобби и для плеера -->
+<audio id="lobbyAudio" loop preload="auto">
     <source src="https://image2url.com/r2/default/audio/1775781111930-526b21fb-d872-4a73-a9f8-acfcc4264107.mp3" type="audio/mpeg">
 </audio>
+<audio id="radioPlayer" style="display: none;" preload="auto"></audio>
 
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
-    // Получаем элементы
+    // ---------- ЭЛЕМЕНТЫ ----------
+    const lobbyDiv = document.getElementById('lobby');
+    const playerDiv = document.getElementById('player');
     const lobbyAudio = document.getElementById('lobbyAudio');
     const mockupBtn = document.getElementById('mockupBtn');
     const djsetBtn = document.getElementById('djsetBtn');
 
-    // URL вашего основного плеера с диджей-сетом (замените на свой, если нужно)
-    const DJ_SET_URL = "https://giorg19851-lgtm.github.io/countryboys_fm.github.io/";
+    // Элементы плеера
+    const audio = document.getElementById('radioPlayer');
+    const vinylVideo = document.getElementById('vinylVideo');
+    const statusDiv = document.getElementById('playbackStatus');
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const closeBtn = document.getElementById('closeBtn');
 
-    // Обработчик для кнопки "МАКЕТ" — просто заглушка, ничего не делает
+    // URL аудио для плеера (диджей-сет)
+    const audioUrl = "https://videotourl.com/audio/1775763278412-e5f55dc7-1efc-4948-9f59-cb84416861e2.mp3";
+
+    // ---------- ФУНКЦИИ ПЛЕЕРА ----------
+    function savePosition() {
+        if (audio && !isNaN(audio.currentTime) && audio.currentTime > 0) {
+            localStorage.setItem('radio_position', audio.currentTime);
+        }
+    }
+
+    function loadTrack() {
+        audio.src = audioUrl;
+        audio.load();
+        const savedTime = localStorage.getItem('radio_position');
+        if (savedTime && !isNaN(parseFloat(savedTime))) {
+            audio.currentTime = parseFloat(savedTime);
+            const mins = Math.floor(parseFloat(savedTime) / 60);
+            const secs = Math.floor(parseFloat(savedTime) % 60).toString().padStart(2,'0');
+            updateStatusText(`ТАЙМКОД ${mins}:${secs}`);
+        } else {
+            audio.currentTime = 0;
+            updateStatusText(`НАЖМИ СЛЫШАТЬ`);
+        }
+    }
+
+    function startSpinning() {
+        vinylVideo.classList.add('spinning');
+        vinylVideo.play().catch(e => console.log("video play", e));
+    }
+    function stopSpinning() {
+        vinylVideo.classList.remove('spinning');
+        vinylVideo.pause();
+    }
+
+    function startPlayback() {
+        audio.play().then(() => {
+            updateStatusText(`СЛЫШИШЬ?`);
+            startSpinning();
+        }).catch(() => updateStatusText(`ОШИБКА`));
+    }
+
+    function pausePlayback() {
+        audio.pause();
+        updateStatusText(`ПАУЗА`);
+        stopSpinning();
+    }
+
+    function closePlayer() {
+        // Закрываем Telegram WebApp, если открыто внутри
+        const tg = window.Telegram.WebApp;
+        if (tg && tg.close) tg.close();
+        else window.close();
+    }
+
+    // Обновление статуса с мерцанием букв (упрощённо)
+    function updateStatusText(newText) {
+        if (!statusDiv) return;
+        statusDiv.innerText = newText;
+        // Можно добавить мерцание, но для краткости оставим без glitch (можно вернуть позже)
+        statusDiv.innerHTML = newText + '<span class="blinking-cursor">_</span>';
+    }
+
+    // ---------- ПЕРЕКЛЮЧЕНИЕ МЕЖДУ ЛОББИ И ПЛЕЕРОМ ----------
+    function showPlayer() {
+        // Останавливаем музыку лобби
+        lobbyAudio.pause();
+        // Скрываем лобби, показываем плеер
+        lobbyDiv.classList.add('hidden');
+        playerDiv.classList.remove('hidden');
+        // Загружаем трек и восстанавливаем позицию
+        loadTrack();
+        // Не запускаем автовоспроизведение сразу, пусть пользователь нажмёт "СЛЫШАТЬ"
+    }
+
+    // ---------- ОБРАБОТЧИКИ КНОПОК ЛОББИ ----------
     mockupBtn.addEventListener('click', () => {
-        // Можно добавить вибрацию или сообщение, если хотите
-        console.log("Макет нажат, ничего не происходит");
-        // Опционально: показать всплывашку, что это демо
+        // Макет: просто уведомление
         alert("Это макет. Вторая кнопка ведёт на радио.");
     });
 
-    // Обработчик для кнопки "ДИДЖЕЙ СЕТ" — переход на основной плеер
     djsetBtn.addEventListener('click', () => {
-        // Останавливаем музыку лобби, чтобы не накладывалась
-        lobbyAudio.pause();
-        // Переходим на страницу с диджей-сетом
-        window.location.href = DJ_SET_URL;
+        showPlayer();
     });
 
-    // Боремся с автовоспроизведением (браузеры блокируют)
-    // Пробуем запустить музыку лобби автоматически, если блокируется — ждём первого касания
-    function attemptPlay() {
+    // ---------- ИНИЦИАЛИЗАЦИЯ ПЛЕЕРА (события аудио) ----------
+    audio.addEventListener('play', () => {
+        updateStatusText(`СЛЫШИШЬ?`);
+        startSpinning();
+    });
+    audio.addEventListener('pause', () => {
+        updateStatusText(`ПАУЗА`);
+        stopSpinning();
+    });
+    audio.addEventListener('ended', () => {
+        audio.currentTime = 0;
+        localStorage.setItem('radio_position', 0);
+        updateStatusText(`КОНЕЦ (ЖМИ СЛЫШАТЬ)`);
+        stopSpinning();
+    });
+
+    setInterval(() => {
+        if (audio && !audio.paused && !isNaN(audio.currentTime)) {
+            savePosition();
+        }
+    }, 2000);
+    window.addEventListener('beforeunload', () => savePosition());
+
+    // Кнопки управления плеером
+    if (startBtn) {
+        startBtn.addEventListener('click', () => {
+            if (!audio.src || audio.src === "") {
+                loadTrack();
+            }
+            startPlayback();
+        });
+    }
+    if (pauseBtn) {
+        pauseBtn.addEventListener('click', pausePlayback);
+    }
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closePlayer);
+    }
+
+    // ---------- МУЗЫКА ЛОББИ (автовоспроизведение с обходом блокировки) ----------
+    function attemptLobbyPlay() {
         lobbyAudio.play().catch(() => {
             const playOnInteraction = () => {
                 lobbyAudio.play();
@@ -190,19 +438,14 @@
             document.body.addEventListener('click', playOnInteraction);
         });
     }
-    window.addEventListener('load', attemptPlay);
+    window.addEventListener('load', attemptLobbyPlay);
 
-    // Анимация вращения пластинок при наведении (опционально)
-    const discs = document.querySelectorAll('.vinyl-disc');
-    discs.forEach(disc => {
-        disc.style.transition = 'transform 0.3s linear';
-        disc.addEventListener('mouseenter', () => {
-            disc.style.transform = 'rotate(10deg) scale(1.02)';
-        });
-        disc.addEventListener('mouseleave', () => {
-            disc.style.transform = 'rotate(0deg) scale(1)';
-        });
-    });
+    // Telegram WebApp (для кнопки закрытия)
+    const tg = window.Telegram.WebApp;
+    if (tg) {
+        tg.expand();
+        tg.MainButton.hide(); // не показываем стандартную кнопку
+    }
 </script>
 </body>
 </html>
