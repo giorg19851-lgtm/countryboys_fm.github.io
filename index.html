@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Vinyl Radio</title>
+    <title>Vinyl Selector</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         * {
@@ -21,327 +21,188 @@
             align-items: center;
             font-family: 'Press Start 2P', monospace;
             overflow: hidden;
-        }
-
-        .vinyl {
             position: relative;
-            width: 90vw;
-            max-width: 500px;
-            aspect-ratio: 1 / 1;
+        }
+
+        /* Контейнер с кнопками */
+        .lobby {
+            text-align: center;
+            width: 90%;
+            max-width: 600px;
+            z-index: 2;
+        }
+
+        /* Заголовок */
+        h1 {
+            font-size: 32px;
+            color: white;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+            margin-bottom: 50px;
+            letter-spacing: 4px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.8; text-shadow: 0 0 5px white; }
+            50% { opacity: 1; text-shadow: 0 0 20px white; }
+        }
+
+        /* Контейнер для двух пластинок */
+        .vinyl-selector {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        /* Стиль кнопки-пластинки */
+        .vinyl-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s ease, filter 0.2s ease;
+            filter: drop-shadow(0 0 15px rgba(255,255,255,0.3));
+        }
+
+        .vinyl-button:hover {
+            transform: scale(1.05);
+            filter: drop-shadow(0 0 25px rgba(255,255,255,0.6));
+        }
+
+        .vinyl-button:active {
+            transform: scale(0.98);
+        }
+
+        /* Сама пластинка (круг с картинкой) */
+        .vinyl-disc {
+            width: 180px;
+            height: 180px;
             border-radius: 50%;
-            overflow: hidden;
-            box-shadow: 0 0 20px rgba(255,255,255,0.3);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
+            margin-bottom: 15px;
+            box-shadow: 0 0 20px rgba(255,255,255,0.2);
+            transition: box-shadow 0.2s;
         }
 
-        .vinyl-video {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 50%;
-            pointer-events: none;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        .vinyl-video.spinning {
-            animation: spin 4s linear infinite;
-        }
-
-        .vinyl-video::after {
+        /* Чёрное отверстие в центре */
+        .vinyl-disc::after {
             content: "";
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 12%;
-            height: 12%;
+            width: 20px;
+            height: 20px;
             background: black;
             border-radius: 50%;
             transform: translate(-50%, -50%);
             box-shadow: 0 0 0 2px white;
-            pointer-events: none;
         }
 
-        .vinyl-controls {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 85%;
-            text-align: center;
-            z-index: 10;
-            pointer-events: auto;
-            background: transparent;
-        }
-
-        /* Единый размер шрифта для всех текстовых элементов */
-        h1, .status, button {
+        /* Подпись под кнопкой */
+        .vinyl-label {
             font-family: 'Press Start 2P', monospace;
-            font-size: 16px;  /* одинаковый размер */
+            font-size: 12px;
             color: white;
-        }
-
-        h1 {
-            font-weight: normal;
-            margin-bottom: 20px;
-            letter-spacing: 1px;
-            text-shadow: 2px 2px 0 black, 0 0 8px rgba(0,0,0,0.8);
-            line-height: 1.4;
-        }
-
-        .status {
+            text-shadow: 1px 1px 0 black;
             background: rgba(0,0,0,0.5);
-            border: 2px solid white;
-            padding: 12px 20px;
+            padding: 8px 12px;
+            border-radius: 20px;
             display: inline-block;
-            backdrop-filter: blur(2px);
-            margin-bottom: 20px; /* одинаковый отступ снизу, как у h1 */
+            backdrop-filter: blur(4px);
         }
 
-        .controls {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            flex-wrap: wrap;
+        /* Скрытый аудиоплеер для лобби */
+        #lobbyAudio {
+            display: none;
         }
 
-        button {
-            background: rgba(0,0,0,0.7);
-            border: 2px solid white;
-            padding: 10px 18px;
-            cursor: pointer;
-            backdrop-filter: blur(2px);
-            transition: 0.05s linear;
-        }
-        button:active {
-            background: white;
-            color: black;
-        }
-
-        .blinking-cursor {
-            display: inline-block;
-            width: 12px;
-            animation: blink 1s step-end infinite;
-        }
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
-        }
-
-        .glitch-letter {
-            display: inline-block;
-            transition: opacity 0.05s ease;
-        }
-        .glitch-letter.off {
-            opacity: 0;
+        /* Адаптивность */
+        @media (max-width: 500px) {
+            h1 { font-size: 24px; margin-bottom: 30px; }
+            .vinyl-disc { width: 130px; height: 130px; }
+            .vinyl-label { font-size: 9px; }
+            .vinyl-selector { gap: 20px; }
         }
     </style>
 </head>
 <body>
-<div class="vinyl">
-    <video class="vinyl-video" id="vinylVideo" loop muted playsinline>
-        <source src="https://github.com/giorg19851-lgtm/countryboys_fm.github.io/raw/refs/heads/main/document_5386562835193042585.mp4" type="video/mp4">
-    </video>
-    <div class="vinyl-controls">
-        <h1 id="glitchTitle">COUNTRY BOYS FM</h1>
-        <div class="status" id="playbackStatus">НАЖМИ СЛЫШАТЬ</div>
-        <div class="controls">
-            <button id="startBtn">СЛЫШАТЬ</button>
-            <button id="pauseBtn">ПАУЗА</button>
-            <button id="closeBtn">НЕ СЛЫШАТЬ</button>
-        </div>
+
+<div class="lobby">
+    <h1>ВЫБИРАЙ</h1>
+    <div class="vinyl-selector">
+        <!-- Кнопка 1: Макет (просто кнопка, ничего не делает, только музыка лобби) -->
+        <button class="vinyl-button" id="mockupBtn">
+            <div class="vinyl-disc" style="background-image: url('https://raw.githubusercontent.com/giorg19851-lgtm/countryboys_fm.github.io/main/fm.png');"></div>
+            <div class="vinyl-label">3</div>
+        </button>
+
+        <!-- Кнопка 2: Переход на диджей-сет (ваш основной плеер) -->
+        <button class="vinyl-button" id="djsetBtn">
+            <div class="vinyl-disc" style="background-image: url('https://raw.githubusercontent.com/giorg19851-lgtm/countryboys_fm.github.io/main/fm.png');"></div>
+            <div class="vinyl-label">17</div>
+        </button>
     </div>
 </div>
 
-<audio id="radioPlayer" style="display: none;" preload="auto"></audio>
+<!-- Фоновая музыка для лобби -->
+<audio id="lobbyAudio" autoplay loop>
+    <source src="https://image2url.com/r2/default/audio/1775781111930-526b21fb-d872-4a73-a9f8-acfcc4264107.mp3" type="audio/mpeg">
+</audio>
 
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
-    let glitchIntervals = [];
+    // Получаем элементы
+    const lobbyAudio = document.getElementById('lobbyAudio');
+    const mockupBtn = document.getElementById('mockupBtn');
+    const djsetBtn = document.getElementById('djsetBtn');
 
-    function stopAllGlitch() {
-        glitchIntervals.forEach(clearInterval);
-        glitchIntervals = [];
-    }
+    // URL вашего основного плеера с диджей-сетом (замените на свой, если нужно)
+    const DJ_SET_URL = "https://giorg19851-lgtm.github.io/countryboys_fm.github.io/";
 
-    function applyGlitchToElement(element) {
-        if (!element) return;
-        const originalText = element.innerText;
-        if (!originalText) return;
-        
-        const letters = originalText.split('');
-        const spans = letters.map(char => {
-            if (char === ' ') return ' ';
-            return `<span class="glitch-letter">${char}</span>`;
-        });
-        element.innerHTML = spans.join('');
-        
-        const spansList = element.querySelectorAll('.glitch-letter');
-        if (spansList.length === 0) return;
-        
-        const interval = setInterval(() => {
-            const randomIndex = Math.floor(Math.random() * spansList.length);
-            const letter = spansList[randomIndex];
-            if (!letter) return;
-            letter.classList.add('off');
-            setTimeout(() => {
-                letter.classList.remove('off');
-            }, 200);
-        }, Math.random() * 1500 + 1500);
-        glitchIntervals.push(interval);
-    }
+    // Обработчик для кнопки "МАКЕТ" — просто заглушка, ничего не делает
+    mockupBtn.addEventListener('click', () => {
+        // Можно добавить вибрацию или сообщение, если хотите
+        console.log("Макет нажат, ничего не происходит");
+        // Опционально: показать всплывашку, что это демо
+        alert("Это макет. Вторая кнопка ведёт на радио.");
+    });
 
-    function applyGlitchToStatic() {
-        const title = document.getElementById('glitchTitle');
-        if (title) applyGlitchToElement(title);
-        const startBtn = document.getElementById('startBtn');
-        if (startBtn && !startBtn.hasGlitch) {
-            applyGlitchToElement(startBtn);
-            startBtn.hasGlitch = true;
-        }
-        const pauseBtn = document.getElementById('pauseBtn');
-        if (pauseBtn && !pauseBtn.hasGlitch) {
-            applyGlitchToElement(pauseBtn);
-            pauseBtn.hasGlitch = true;
-        }
-        const closeBtn = document.getElementById('closeBtn');
-        if (closeBtn && !closeBtn.hasGlitch) {
-            applyGlitchToElement(closeBtn);
-            closeBtn.hasGlitch = true;
-        }
-    }
+    // Обработчик для кнопки "ДИДЖЕЙ СЕТ" — переход на основной плеер
+    djsetBtn.addEventListener('click', () => {
+        // Останавливаем музыку лобби, чтобы не накладывалась
+        lobbyAudio.pause();
+        // Переходим на страницу с диджей-сетом
+        window.location.href = DJ_SET_URL;
+    });
 
-    function updateStatusText(newText) {
-        const statusDiv = document.getElementById('playbackStatus');
-        if (!statusDiv) return;
-        statusDiv.innerText = newText;
-        const letters = newText.split('');
-        const spans = letters.map(char => {
-            if (char === ' ') return ' ';
-            return `<span class="glitch-letter">${char}</span>`;
-        });
-        statusDiv.innerHTML = spans.join('') + '<span class="blinking-cursor">_</span>';
-        
-        const spansList = statusDiv.querySelectorAll('.glitch-letter');
-        if (spansList.length > 0) {
-            const interval = setInterval(() => {
-                const randomIndex = Math.floor(Math.random() * spansList.length);
-                const letter = spansList[randomIndex];
-                if (letter) {
-                    letter.classList.add('off');
-                    setTimeout(() => letter.classList.remove('off'), 200);
-                }
-            }, Math.random() * 1500 + 1500);
-            glitchIntervals.push(interval);
-        }
-    }
-
-    const audioUrl = "https://videotourl.com/audio/1775763278412-e5f55dc7-1efc-4948-9f59-cb84416861e2.mp3";
-
-    const audio = document.getElementById('radioPlayer');
-    const vinylVideo = document.getElementById('vinylVideo');
-    const tg = window.Telegram.WebApp;
-
-    function savePosition() {
-        if (audio && !isNaN(audio.currentTime) && audio.currentTime > 0) {
-            localStorage.setItem('radio_position', audio.currentTime);
-        }
-    }
-
-    function loadTrack() {
-        audio.src = audioUrl;
-        audio.load();
-        const savedTime = localStorage.getItem('radio_position');
-        if (savedTime && !isNaN(parseFloat(savedTime))) {
-            audio.currentTime = parseFloat(savedTime);
-            const mins = Math.floor(parseFloat(savedTime) / 60);
-            const secs = Math.floor(parseFloat(savedTime) % 60).toString().padStart(2,'0');
-            updateStatusText(`ТАЙМКОД ${mins}:${secs}`);
-        } else {
-            audio.currentTime = 0;
-            updateStatusText(`НАЖМИ СЛЫШАТЬ`);
-        }
-    }
-
-    function startSpinning() {
-        vinylVideo.classList.add('spinning');
-        vinylVideo.play().catch(e => console.log("video autoplay blocked", e));
-    }
-    function stopSpinning() {
-        vinylVideo.classList.remove('spinning');
-        vinylVideo.pause();
-    }
-
-    function startPlayback() {
-        audio.play().then(() => {
-            updateStatusText(`СЛЫШИШЬ?`);
-            startSpinning();
-        }).catch((err) => {
-            updateStatusText(`ОШИБКА`);
-            console.error(err);
+    // Боремся с автовоспроизведением (браузеры блокируют)
+    // Пробуем запустить музыку лобби автоматически, если блокируется — ждём первого касания
+    function attemptPlay() {
+        lobbyAudio.play().catch(() => {
+            const playOnInteraction = () => {
+                lobbyAudio.play();
+                document.body.removeEventListener('touchstart', playOnInteraction);
+                document.body.removeEventListener('click', playOnInteraction);
+            };
+            document.body.addEventListener('touchstart', playOnInteraction);
+            document.body.addEventListener('click', playOnInteraction);
         });
     }
+    window.addEventListener('load', attemptPlay);
 
-    function pausePlayback() {
-        audio.pause();
-        updateStatusText(`ПАУЗА`);
-        stopSpinning();
-    }
-
-    function closeApp() {
-        tg.close();
-    }
-
-    audio.addEventListener('play', () => {
-        updateStatusText(`СЛЫШИШЬ?`);
-        startSpinning();
+    // Анимация вращения пластинок при наведении (опционально)
+    const discs = document.querySelectorAll('.vinyl-disc');
+    discs.forEach(disc => {
+        disc.style.transition = 'transform 0.3s linear';
+        disc.addEventListener('mouseenter', () => {
+            disc.style.transform = 'rotate(10deg) scale(1.02)';
+        });
+        disc.addEventListener('mouseleave', () => {
+            disc.style.transform = 'rotate(0deg) scale(1)';
+        });
     });
-    audio.addEventListener('pause', () => {
-        updateStatusText(`ПАУЗА`);
-        stopSpinning();
-    });
-    audio.addEventListener('ended', () => {
-        audio.currentTime = 0;
-        localStorage.setItem('radio_position', 0);
-        updateStatusText(`КОНЕЦ (ЖМИ СЛЫШАТЬ)`);
-        stopSpinning();
-    });
-
-    setInterval(() => {
-        if (audio && !audio.paused && !isNaN(audio.currentTime)) {
-            savePosition();
-        }
-    }, 2000);
-    window.addEventListener('beforeunload', () => savePosition());
-
-    tg.expand();
-    tg.MainButton.hide();
-
-    document.getElementById('startBtn').addEventListener('click', () => {
-        if (!audio.src || audio.src === "") {
-            loadTrack();
-        }
-        startPlayback();
-    });
-    document.getElementById('pauseBtn').addEventListener('click', () => {
-        pausePlayback();
-    });
-    document.getElementById('closeBtn').addEventListener('click', () => {
-        closeApp();
-    });
-
-    loadTrack();
-    if (audio.currentTime > 0 && !audio.paused) {
-        startSpinning();
-    } else {
-        stopSpinning();
-    }
-    
-    applyGlitchToStatic();
 </script>
 </body>
 </html>
