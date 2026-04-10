@@ -76,9 +76,8 @@
             position: relative;
             margin-bottom: 15px;
             box-shadow: 0 0 20px rgba(255,255,255,0.2);
-            transition: filter 0.2s;
         }
-        /* Инверсия для левого диска (макет) */
+        /* Инверсия для левого диска */
         .vinyl-disc.inverted {
             filter: invert(1);
         }
@@ -112,7 +111,7 @@
             .vinyl-selector { gap: 20px; }
         }
 
-        /* Основной плеер (диджей-сет) — без изменений */
+        /* Основной плеер */
         .player {
             position: relative;
             width: 90vw;
@@ -228,12 +227,12 @@
 <div id="lobby" class="lobby">
     <h1>ВЫБИРАЙ</h1>
     <div class="vinyl-selector">
-        <!-- Левая кнопка (макет, инверсия) -->
+        <!-- Левая кнопка (инверсия) -->
         <button class="vinyl-button" id="maketBtn">
             <div class="vinyl-disc inverted" style="background-image: url('https://raw.githubusercontent.com/giorg19851-lgtm/countryboys_fm.github.io/main/fm.png');"></div>
             <div class="vinyl-label">1</div>
         </button>
-        <!-- Правая кнопка (диджей-сет, обычная) -->
+        <!-- Правая кнопка (без инверсии) -->
         <button class="vinyl-button" id="djsetBtn">
             <div class="vinyl-disc" style="background-image: url('https://raw.githubusercontent.com/giorg19851-lgtm/countryboys_fm.github.io/main/fm.png');"></div>
             <div class="vinyl-label">2</div>
@@ -241,7 +240,7 @@
     </div>
 </div>
 
-<!-- ОСНОВНОЙ ПЛЕЕР (диджей-сет) -->
+<!-- ОСНОВНОЙ ПЛЕЕР (без инверсии) -->
 <div id="player" class="player hidden">
     <video class="vinyl-video" id="vinylVideo" loop muted playsinline>
         <source src="https://github.com/giorg19851-lgtm/countryboys_fm.github.io/raw/refs/heads/main/document_5386562835193042585.mp4" type="video/mp4">
@@ -263,13 +262,12 @@
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
-    // ========== ПРЯМЫЕ ССЫЛКИ ==========
+    // Ссылки на музыку
     const LOBBY_MUSIC_URL = "https://image2url.com/r2/default/audio/1775781111930-526b21fb-d872-4a73-a9f8-acfcc4264107.mp3";
     const DJ_SET_URL = "https://videotourl.com/audio/1775763278412-e5f55dc7-1efc-4948-9f59-cb84416861e2.mp3";
-    // Ссылка для макета (левая кнопка) — ЗАМЕНИТЕ НА РЕАЛЬНУЮ, КОГДА ПРИШЛЁТЕ
-    const MAKET_MUSIC_URL = "PLACEHOLDER_MAKET_MUSIC_URL";  // пока заглушка
+    const MAKET_MUSIC_URL = "PLACEHOLDER_MAKET_MUSIC_URL";  // замените позже
 
-    // ========== ЭЛЕМЕНТЫ ==========
+    // DOM элементы
     const lobbyDiv = document.getElementById('lobby');
     const playerDiv = document.getElementById('player');
     const lobbyAudio = document.getElementById('lobbyAudio');
@@ -279,7 +277,7 @@
     const statusDiv = document.getElementById('playbackStatus');
     const tg = window.Telegram.WebApp;
 
-    // ========== ФУНКЦИИ ПЛЕЕРА (диджей-сет) — без изменений ==========
+    // ---------- Плеер (диджей-сет) ----------
     let glitchIntervals = [];
 
     function stopAllGlitch() {
@@ -398,9 +396,7 @@
     document.getElementById('pauseBtn')?.addEventListener('click', pausePlayback);
     document.getElementById('closeBtn')?.addEventListener('click', closePlayer);
 
-    // ========== ЛОББИ ==========
-    let maketPlaying = false;
-
+    // ---------- Лобби ----------
     function playLobbyMusic() {
         lobbyAudio.src = LOBBY_MUSIC_URL;
         lobbyAudio.loop = true;
@@ -415,42 +411,31 @@
         });
     }
 
-    // Остановить всю музыку лобби (кроме макетной)
     function stopLobbyMusic() {
         lobbyAudio.pause();
         lobbyAudio.currentTime = 0;
     }
 
-    // Проигрывание музыки макета
     function playMaketMusic() {
         if (!MAKET_MUSIC_URL || MAKET_MUSIC_URL === "PLACEHOLDER_MAKET_MUSIC_URL") {
-            console.warn("Ссылка на музыку макета не задана");
             alert("Музыка для макета ещё не добавлена. Пришлите ссылку на MP3.");
             return;
         }
-        // Останавливаем фоновую музыку лобби
         stopLobbyMusic();
-        // Останавливаем макетную, если играла, перезапускаем
         maketAudio.pause();
         maketAudio.currentTime = 0;
         maketAudio.src = MAKET_MUSIC_URL;
         maketAudio.loop = true;
         maketAudio.play().catch(e => console.error("Ошибка воспроизведения макета:", e));
-        maketPlaying = true;
     }
 
-    // Переключение на плеер диджей-сета
     function switchToPlayer() {
-        // Останавливаем всю фоновую и макетную музыку
         stopLobbyMusic();
         maketAudio.pause();
         maketAudio.currentTime = 0;
-        // Скрываем лобби, показываем плеер
         lobbyDiv.classList.add('hidden');
         playerDiv.classList.remove('hidden');
-        // Загружаем трек диджей-сета
         if (!radioAudio.src || radioAudio.src === "") loadTrack();
-        // Применяем мерцание
         applyGlitchToElement(document.querySelector('#player .player-controls h1'));
         ['startBtn', 'pauseBtn', 'closeBtn'].forEach(id => {
             const btn = document.getElementById(id);
@@ -463,13 +448,10 @@
         else stopSpinning();
     }
 
-    // Обработчики кнопок лобби
-    document.getElementById('maketBtn')?.addEventListener('click', () => {
-        playMaketMusic();
-    });
+    document.getElementById('maketBtn')?.addEventListener('click', playMaketMusic);
     document.getElementById('djsetBtn')?.addEventListener('click', switchToPlayer);
 
-    // ========== ИНИЦИАЛИЗАЦИЯ ==========
+    // Запуск
     tg.expand();
     tg.MainButton.hide();
     playLobbyMusic();
