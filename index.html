@@ -58,39 +58,18 @@
             transform: scale(0.98);
         }
 
-        /* Левая пластинка: чёрные полосы шире белых (8px чёрные, 4px белые) */
-        .vinyl-disc-left {
+        .vinyl-disc {
             width: 180px;
             height: 180px;
             border-radius: 50%;
-            background-color: black;
-            background-image: repeating-linear-gradient(
-                45deg,
-                black 0px, black 8px,
-                white 8px, white 12px
-            );
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
             position: relative;
             margin-bottom: 15px;
             box-shadow: 0 0 20px rgba(255,255,255,0.2);
         }
-        /* Правая пластинка: белые полосы шире чёрных (8px белые, 4px чёрные) */
-        .vinyl-disc-right {
-            width: 180px;
-            height: 180px;
-            border-radius: 50%;
-            background-color: black;
-            background-image: repeating-linear-gradient(
-                45deg,
-                white 0px, white 8px,
-                black 8px, black 12px
-            );
-            position: relative;
-            margin-bottom: 15px;
-            box-shadow: 0 0 20px rgba(255,255,255,0.2);
-        }
-        /* Чёрное отверстие в центре для обеих пластинок */
-        .vinyl-disc-left::after,
-        .vinyl-disc-right::after {
+        .vinyl-disc::after {
             content: "";
             position: absolute;
             top: 50%;
@@ -115,7 +94,7 @@
             backdrop-filter: blur(4px);
         }
 
-        /* ---------- ПЛЕЕР (без изменений, кроме удаления стикеров) ---------- */
+        /* ---------- ПЛЕЕР ---------- */
         .player {
             position: relative;
             width: 90vw;
@@ -174,7 +153,7 @@
         }
         h1 {
             font-size: 14px;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
             font-weight: normal;
             letter-spacing: 1px;
             color: white;
@@ -182,29 +161,53 @@
             line-height: 1.4;
         }
         .status {
-            font-size: 14px;
+            font-size: 12px;
             background: rgba(0,0,0,0.5);
             border: 2px solid white;
-            padding: 10px 16px;
+            padding: 8px 12px;
             display: inline-block;
             backdrop-filter: blur(2px);
-            margin-bottom: 16px;
+            margin-bottom: 12px;
             font-family: 'Press Start 2P', monospace;
             color: white;
         }
         .controls {
             display: flex;
             justify-content: center;
-            gap: 16px;
+            gap: 12px;
             flex-wrap: wrap;
-            margin-bottom: 20px;
+            margin-bottom: 12px;
+        }
+        .nav-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 12px 0;
+        }
+        .nav-btn {
+            font-family: 'Press Start 2P', monospace;
+            background: rgba(0,0,0,0.7);
+            border: 2px solid white;
+            font-size: 18px;
+            font-weight: bold;
+            width: 50px;
+            padding: 8px 0;
+            color: white;
+            cursor: pointer;
+            backdrop-filter: blur(2px);
+            transition: 0.05s linear;
+            text-align: center;
+        }
+        .nav-btn:active {
+            background: white;
+            color: black;
         }
         button {
             font-family: 'Press Start 2P', monospace;
             background: rgba(0,0,0,0.7);
             border: 2px solid white;
-            font-size: 14px;
-            padding: 8px 16px;
+            font-size: 12px;
+            padding: 6px 12px;
             color: white;
             cursor: pointer;
             backdrop-filter: blur(2px);
@@ -219,11 +222,11 @@
             border: 1px solid white;
             font-size: 10px;
             padding: 6px 12px;
-            margin-top: 10px;
+            margin-top: 8px;
         }
         .blinking-cursor {
             display: inline-block;
-            width: 10px;
+            width: 8px;
             animation: blink 1s step-end infinite;
         }
         @keyframes blink {
@@ -238,11 +241,38 @@
             opacity: 0;
         }
 
+        /* Пиксельный стикер */
+        .pixel-sticker {
+            position: fixed;
+            bottom: 30%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: black;
+            border: 2px solid white;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 28px;
+            text-align: center;
+            white-space: pre;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.1s ease;
+            pointer-events: none;
+            box-shadow: 0 0 15px lime;
+            color: lime;
+        }
+        .pixel-sticker.show {
+            opacity: 1;
+        }
+
         @media (max-width: 500px) {
-            .vinyl-disc-left, .vinyl-disc-right { width: 130px; height: 130px; }
+            .vinyl-disc { width: 130px; height: 130px; }
             .vinyl-label { font-size: 9px; }
             .vinyl-selector { gap: 20px; }
-            h1, .status, button { font-size: 12px; }
+            h1 { font-size: 12px; }
+            .status { font-size: 10px; }
+            button { font-size: 10px; padding: 5px 10px; }
+            .nav-btn { width: 40px; font-size: 14px; }
         }
     </style>
 </head>
@@ -251,14 +281,12 @@
 <!-- ЛОББИ -->
 <div id="lobby" class="lobby">
     <div class="vinyl-selector">
-        <!-- Левая пластинка: bathroom pov, чёрные полосы шире -->
         <button class="vinyl-button" data-track="bathroom">
-            <div class="vinyl-disc-left"></div>
+            <div class="vinyl-disc" style="background-image: url('https://raw.githubusercontent.com/giorg19851-lgtm/countryboys_fm.github.io/main/fm.png');"></div>
             <div class="vinyl-label">bathroom pov</div>
         </button>
-        <!-- Правая пластинка: for when the oxxy bussin, белые полосы шире -->
         <button class="vinyl-button" data-track="djset">
-            <div class="vinyl-disc-right"></div>
+            <div class="vinyl-disc" style="background-image: url('https://raw.githubusercontent.com/giorg19851-lgtm/countryboys_fm.github.io/main/fm.png');"></div>
             <div class="vinyl-label">for when the oxxy bussin</div>
         </button>
     </div>
@@ -277,6 +305,11 @@
             <button id="pauseBtn">ПАУЗА</button>
             <button id="closeBtn">НЕ СЛЫШАТЬ</button>
         </div>
+        <div class="nav-controls">
+            <div class="nav-btn" data-seek="0">A</div>
+            <div class="nav-btn" data-seek="0.33">B</div>
+            <div class="nav-btn" data-seek="0.66">C</div>
+        </div>
         <button id="backToLobbyBtn" class="back-button">← НАЗАД</button>
     </div>
 </div>
@@ -284,6 +317,11 @@
 <!-- Аудио для фоновой музыки лобби и для плеера -->
 <audio id="lobbyAudio" loop style="display: none;"></audio>
 <audio id="radioPlayer" style="display: none;" preload="auto"></audio>
+
+<!-- Пиксельный стикер -->
+<div id="pixelSticker" class="pixel-sticker">
+    ⬛🟩⬛<br>🟩🎵🟩<br>⬛🟩⬛
+</div>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
@@ -313,11 +351,13 @@
     const pauseBtn = document.getElementById('pauseBtn');
     const closeBtn = document.getElementById('closeBtn');
     const backToLobbyBtn = document.getElementById('backToLobbyBtn');
+    const navBtns = document.querySelectorAll('.nav-btn');
 
     let currentTrackKey = null;
     let lobbyPosition = 0;
+    let currentTrackDuration = 0;
 
-    // ---------- ФУНКЦИИ ПЛЕЕРА (без стикеров) ----------
+    // ---------- ФУНКЦИИ ПЛЕЕРА ----------
     function savePosition() {
         if (radioAudio && !isNaN(radioAudio.currentTime) && radioAudio.currentTime > 0) {
             localStorage.setItem(tracks[currentTrackKey].storageKey, radioAudio.currentTime);
@@ -330,12 +370,18 @@
         playerTitle.innerText = track.title;
         radioAudio.src = track.url;
         radioAudio.load();
+        
+        // Ждём, когда станет известна длительность
+        radioAudio.addEventListener('loadedmetadata', () => {
+            currentTrackDuration = radioAudio.duration;
+        });
+        
         const savedTime = localStorage.getItem(track.storageKey);
         if (savedTime && !isNaN(parseFloat(savedTime))) {
             radioAudio.currentTime = parseFloat(savedTime);
             const mins = Math.floor(parseFloat(savedTime) / 60);
             const secs = Math.floor(parseFloat(savedTime) % 60).toString().padStart(2,'0');
-            updateStatusText(`⏸ ТАЙМКОД ${mins}:${secs}`);
+            updateStatusText(`⏸ ${mins}:${secs}`);
         } else {
             radioAudio.currentTime = 0;
             updateStatusText(`НАЖМИ СЛЫШАТЬ`);
@@ -351,7 +397,16 @@
         vinylVideo.pause();
     }
 
+    function showPixelSticker() {
+        const sticker = document.getElementById('pixelSticker');
+        sticker.classList.add('show');
+        setTimeout(() => {
+            sticker.classList.remove('show');
+        }, 800);
+    }
+
     function startPlayback() {
+        showPixelSticker();
         radioAudio.play().then(() => {
             updateStatusText(`СЛЫШИШЬ?`);
             startSpinning();
@@ -364,8 +419,17 @@
         stopSpinning();
     }
 
-    function closePlayer() {
-        showLobby();
+    function seekTo(percent) {
+        if (!radioAudio.src || radioAudio.src === "") return;
+        if (currentTrackDuration && currentTrackDuration > 0) {
+            const newTime = currentTrackDuration * percent;
+            radioAudio.currentTime = newTime;
+            updateStatusText(`⏸ ${Math.floor(newTime/60)}:${Math.floor(newTime%60).toString().padStart(2,'0')}`);
+            // Если музыка играла, продолжаем играть с новой позиции
+            if (!radioAudio.paused) {
+                radioAudio.play();
+            }
+        }
     }
 
     function updateStatusText(newText) {
@@ -408,8 +472,7 @@
     document.querySelectorAll('.vinyl-button').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const track = btn.dataset.track;
-            if (track === 'bathroom') showPlayer('bathroom');
-            else if (track === 'djset') showPlayer('djset');
+            showPlayer(track);
         });
     });
 
@@ -424,7 +487,13 @@
     });
     backToLobbyBtn.addEventListener('click', showLobby);
 
-    // Сохранение позиции плеера
+    navBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const seekValue = parseFloat(btn.dataset.seek);
+            seekTo(seekValue);
+        });
+    });
+
     setInterval(() => {
         if (radioAudio && !radioAudio.paused && !isNaN(radioAudio.currentTime)) {
             savePosition();
@@ -432,7 +501,7 @@
     }, 2000);
     window.addEventListener('beforeunload', () => savePosition());
 
-    // Инициализация лобби (фоновая музыка)
+    // Инициализация лобби
     lobbyAudio.src = "https://image2url.com/r2/default/audio/1775781111930-526b21fb-d872-4a73-a9f8-acfcc4264107.mp3";
     lobbyAudio.load();
     function attemptLobbyPlay() {
@@ -448,7 +517,6 @@
     }
     window.addEventListener('load', attemptLobbyPlay);
 
-    // События плеера
     radioAudio.addEventListener('ended', () => {
         radioAudio.currentTime = 0;
         localStorage.setItem(tracks[currentTrackKey].storageKey, 0);
@@ -456,16 +524,15 @@
         stopSpinning();
     });
 
-    // Сохраняем позицию фоновой музыки лобби
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.MainButton.hide();
+
     setInterval(() => {
         if (lobbyAudio && !lobbyAudio.paused && !isNaN(lobbyAudio.currentTime)) {
             lobbyPosition = lobbyAudio.currentTime;
         }
     }, 2000);
-
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-    tg.MainButton.hide();
 </script>
 </body>
 </html>
