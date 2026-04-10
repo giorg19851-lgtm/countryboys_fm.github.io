@@ -58,17 +58,23 @@
             transform: scale(0.98);
         }
 
+        /* Пластинка с чёрно-белой решёткой (диагональные линии) */
         .vinyl-disc {
             width: 180px;
             height: 180px;
             border-radius: 50%;
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+            background-color: black;
+            /* Чёрно-белая диагональная решётка */
+            background-image: repeating-linear-gradient(
+                45deg,
+                white 0px, white 4px,
+                black 4px, black 8px
+            );
             position: relative;
             margin-bottom: 15px;
             box-shadow: 0 0 20px rgba(255,255,255,0.2);
         }
+        /* Чёрное отверстие в центре */
         .vinyl-disc::after {
             content: "";
             position: absolute;
@@ -94,7 +100,7 @@
             backdrop-filter: blur(4px);
         }
 
-        /* ---------- ПЛЕЕР ---------- */
+        /* ---------- ПЛЕЕР (как был) ---------- */
         .player {
             position: relative;
             width: 90vw;
@@ -217,11 +223,36 @@
             opacity: 0;
         }
 
+        /* Пиксельный стикер (всплывающий) */
+        .pixel-sticker {
+            position: fixed;
+            bottom: 30%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: black;
+            border: 2px solid white;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 28px;
+            text-align: center;
+            white-space: pre;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.1s ease;
+            pointer-events: none;
+            box-shadow: 0 0 15px lime;
+            color: lime;
+        }
+        .pixel-sticker.show {
+            opacity: 1;
+        }
+
         @media (max-width: 500px) {
             .vinyl-disc { width: 130px; height: 130px; }
             .vinyl-label { font-size: 9px; }
             .vinyl-selector { gap: 20px; }
             h1, .status, button { font-size: 12px; }
+            .pixel-sticker { font-size: 20px; bottom: 25%; }
         }
     </style>
 </head>
@@ -231,17 +262,17 @@
 <div id="lobby" class="lobby">
     <div class="vinyl-selector">
         <button class="vinyl-button" data-track="bathroom">
-            <div class="vinyl-disc" style="background-image: url('https://raw.githubusercontent.com/giorg19851-lgtm/countryboys_fm.github.io/main/fm.png');"></div>
+            <div class="vinyl-disc"></div>
             <div class="vinyl-label">bathroom pov</div>
         </button>
         <button class="vinyl-button" data-track="djset">
-            <div class="vinyl-disc" style="background-image: url('https://raw.githubusercontent.com/giorg19851-lgtm/countryboys_fm.github.io/main/fm.png');"></div>
+            <div class="vinyl-disc"></div>
             <div class="vinyl-label">for when the oxxy bussin</div>
         </button>
     </div>
 </div>
 
-<!-- ПЛЕЕР (изначально скрыт) -->
+<!-- ПЛЕЕР -->
 <div id="player" class="player">
     <video class="vinyl-video" id="vinylVideo" loop muted playsinline>
         <source src="https://github.com/giorg19851-lgtm/countryboys_fm.github.io/raw/refs/heads/main/document_5386562835193042585.mp4" type="video/mp4">
@@ -261,6 +292,11 @@
 <!-- Аудио для фоновой музыки лобби и для плеера -->
 <audio id="lobbyAudio" loop style="display: none;"></audio>
 <audio id="radioPlayer" style="display: none;" preload="auto"></audio>
+
+<!-- Элемент для пиксельного стикера -->
+<div id="pixelSticker" class="pixel-sticker">
+    ⬛🟩⬛<br>🟩🎵🟩<br>⬛🟩⬛
+</div>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
@@ -292,7 +328,16 @@
     const backToLobbyBtn = document.getElementById('backToLobbyBtn');
 
     let currentTrackKey = null;
-    let lobbyPosition = 0; // для сохранения позиции фоновой музыки
+    let lobbyPosition = 0;
+
+    // ---------- ПИКСЕЛЬНЫЙ СТИКЕР ----------
+    function showPixelSticker() {
+        const sticker = document.getElementById('pixelSticker');
+        sticker.classList.add('show');
+        setTimeout(() => {
+            sticker.classList.remove('show');
+        }, 800);
+    }
 
     // ---------- ФУНКЦИИ ПЛЕЕРА ----------
     function savePosition() {
@@ -329,6 +374,7 @@
     }
 
     function startPlayback() {
+        showPixelSticker();   // <-- стикер вылетает при каждом нажатии "СЛЫШАТЬ"
         radioAudio.play().then(() => {
             updateStatusText(`СЛЫШИШЬ?`);
             startSpinning();
@@ -342,7 +388,6 @@
     }
 
     function closePlayer() {
-        // Возвращаемся в лобби
         showLobby();
     }
 
@@ -351,21 +396,16 @@
         const letters = newText.split('');
         const spans = letters.map(char => char === ' ' ? ' ' : `<span class="glitch-letter">${char}</span>`);
         statusDiv.innerHTML = spans.join('') + '<span class="blinking-cursor">_</span>';
-        // мерцание букв (упрощённо, без интервалов, но можно добавить)
     }
 
     // ---------- ПЕРЕКЛЮЧЕНИЕ МЕЖДУ ЛОББИ И ПЛЕЕРОМ ----------
-    let lobbyAudioPlaying = false;
-
     function showLobby() {
-        // Останавливаем плеер и прячем его
         if (radioAudio && !radioAudio.paused) {
             radioAudio.pause();
             stopSpinning();
         }
         playerDiv.classList.remove('active');
         lobbyDiv.classList.remove('hidden');
-        // Восстанавливаем фоновую музыку лобби
         if (lobbyAudio.src) {
             lobbyAudio.currentTime = lobbyPosition;
             lobbyAudio.play().catch(e => console.log("lobby audio play", e));
@@ -373,17 +413,13 @@
     }
 
     function showPlayer(trackKey) {
-        // Сохраняем позицию фоновой музыки лобби и останавливаем её
         if (lobbyAudio && !lobbyAudio.paused) {
             lobbyPosition = lobbyAudio.currentTime;
             lobbyAudio.pause();
         }
-        // Прячем лобби, показываем плеер
         lobbyDiv.classList.add('hidden');
         playerDiv.classList.add('active');
-        // Загружаем выбранный трек
         loadTrack(trackKey);
-        // Не запускаем автоматически, только по кнопке СТАРТ
         if (radioAudio.currentTime > 0 && !radioAudio.paused) {
             startSpinning();
         } else {
@@ -392,26 +428,20 @@
     }
 
     // ---------- ОБРАБОТЧИКИ ----------
-    // Выбор пластинки в лобби
     document.querySelectorAll('.vinyl-button').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const track = btn.dataset.track;
-            if (track === 'bathroom') {
-                showPlayer('bathroom');
-            } else if (track === 'djset') {
-                showPlayer('djset');
-            }
+            if (track === 'bathroom') showPlayer('bathroom');
+            else if (track === 'djset') showPlayer('djset');
         });
     });
 
-    // Кнопки плеера
     startBtn.addEventListener('click', () => {
         if (!radioAudio.src) loadTrack(currentTrackKey);
         startPlayback();
     });
     pauseBtn.addEventListener('click', pausePlayback);
     closeBtn.addEventListener('click', () => {
-        // Закрываем приложение Telegram
         const tg = window.Telegram.WebApp;
         tg.close();
     });
@@ -425,10 +455,9 @@
     }, 2000);
     window.addEventListener('beforeunload', () => savePosition());
 
-    // Инициализация: загружаем фоновую музыку лобби
+    // Инициализация лобби (фоновая музыка)
     lobbyAudio.src = "https://image2url.com/r2/default/audio/1775781111930-526b21fb-d872-4a73-a9f8-acfcc4264107.mp3";
     lobbyAudio.load();
-    // Автовоспроизведение лобби (с обходом блокировки)
     function attemptLobbyPlay() {
         lobbyAudio.play().catch(() => {
             const playOnInteraction = () => {
@@ -442,8 +471,7 @@
     }
     window.addEventListener('load', attemptLobbyPlay);
 
-    // Для плеера тоже нужна инициализация (но без автовоспроизведения)
-    // Также обработка окончания трека
+    // События плеера
     radioAudio.addEventListener('ended', () => {
         radioAudio.currentTime = 0;
         localStorage.setItem(tracks[currentTrackKey].storageKey, 0);
@@ -451,17 +479,16 @@
         stopSpinning();
     });
 
-    // Telegram WebApp (для кнопки "НЕ СЛЫШАТЬ")
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-    tg.MainButton.hide();
-
-    // Дополнительно: если пользователь вернулся в лобби, сохраняем позицию фоновой музыки
+    // Сохраняем позицию фоновой музыки лобби
     setInterval(() => {
         if (lobbyAudio && !lobbyAudio.paused && !isNaN(lobbyAudio.currentTime)) {
             lobbyPosition = lobbyAudio.currentTime;
         }
     }, 2000);
+
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.MainButton.hide();
 </script>
 </body>
 </html>
