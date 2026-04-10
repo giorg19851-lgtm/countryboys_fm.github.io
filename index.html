@@ -58,24 +58,39 @@
             transform: scale(0.98);
         }
 
-        /* Пластинка с чёрно-белой решёткой (диагональные линии) */
-        .vinyl-disc {
+        /* Левая пластинка: чёрные полосы шире белых (8px чёрные, 4px белые) */
+        .vinyl-disc-left {
             width: 180px;
             height: 180px;
             border-radius: 50%;
             background-color: black;
-            /* Чёрно-белая диагональная решётка */
             background-image: repeating-linear-gradient(
                 45deg,
-                white 0px, white 4px,
-                black 4px, black 8px
+                black 0px, black 8px,
+                white 8px, white 12px
             );
             position: relative;
             margin-bottom: 15px;
             box-shadow: 0 0 20px rgba(255,255,255,0.2);
         }
-        /* Чёрное отверстие в центре */
-        .vinyl-disc::after {
+        /* Правая пластинка: белые полосы шире чёрных (8px белые, 4px чёрные) */
+        .vinyl-disc-right {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background-color: black;
+            background-image: repeating-linear-gradient(
+                45deg,
+                white 0px, white 8px,
+                black 8px, black 12px
+            );
+            position: relative;
+            margin-bottom: 15px;
+            box-shadow: 0 0 20px rgba(255,255,255,0.2);
+        }
+        /* Чёрное отверстие в центре для обеих пластинок */
+        .vinyl-disc-left::after,
+        .vinyl-disc-right::after {
             content: "";
             position: absolute;
             top: 50%;
@@ -100,7 +115,7 @@
             backdrop-filter: blur(4px);
         }
 
-        /* ---------- ПЛЕЕР (как был) ---------- */
+        /* ---------- ПЛЕЕР (без изменений, кроме удаления стикеров) ---------- */
         .player {
             position: relative;
             width: 90vw;
@@ -223,36 +238,11 @@
             opacity: 0;
         }
 
-        /* Пиксельный стикер (всплывающий) */
-        .pixel-sticker {
-            position: fixed;
-            bottom: 30%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: black;
-            border: 2px solid white;
-            padding: 12px;
-            font-family: monospace;
-            font-size: 28px;
-            text-align: center;
-            white-space: pre;
-            z-index: 1000;
-            opacity: 0;
-            transition: opacity 0.1s ease;
-            pointer-events: none;
-            box-shadow: 0 0 15px lime;
-            color: lime;
-        }
-        .pixel-sticker.show {
-            opacity: 1;
-        }
-
         @media (max-width: 500px) {
-            .vinyl-disc { width: 130px; height: 130px; }
+            .vinyl-disc-left, .vinyl-disc-right { width: 130px; height: 130px; }
             .vinyl-label { font-size: 9px; }
             .vinyl-selector { gap: 20px; }
             h1, .status, button { font-size: 12px; }
-            .pixel-sticker { font-size: 20px; bottom: 25%; }
         }
     </style>
 </head>
@@ -261,12 +251,14 @@
 <!-- ЛОББИ -->
 <div id="lobby" class="lobby">
     <div class="vinyl-selector">
+        <!-- Левая пластинка: bathroom pov, чёрные полосы шире -->
         <button class="vinyl-button" data-track="bathroom">
-            <div class="vinyl-disc"></div>
+            <div class="vinyl-disc-left"></div>
             <div class="vinyl-label">bathroom pov</div>
         </button>
+        <!-- Правая пластинка: for when the oxxy bussin, белые полосы шире -->
         <button class="vinyl-button" data-track="djset">
-            <div class="vinyl-disc"></div>
+            <div class="vinyl-disc-right"></div>
             <div class="vinyl-label">for when the oxxy bussin</div>
         </button>
     </div>
@@ -292,11 +284,6 @@
 <!-- Аудио для фоновой музыки лобби и для плеера -->
 <audio id="lobbyAudio" loop style="display: none;"></audio>
 <audio id="radioPlayer" style="display: none;" preload="auto"></audio>
-
-<!-- Элемент для пиксельного стикера -->
-<div id="pixelSticker" class="pixel-sticker">
-    ⬛🟩⬛<br>🟩🎵🟩<br>⬛🟩⬛
-</div>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
@@ -330,16 +317,7 @@
     let currentTrackKey = null;
     let lobbyPosition = 0;
 
-    // ---------- ПИКСЕЛЬНЫЙ СТИКЕР ----------
-    function showPixelSticker() {
-        const sticker = document.getElementById('pixelSticker');
-        sticker.classList.add('show');
-        setTimeout(() => {
-            sticker.classList.remove('show');
-        }, 800);
-    }
-
-    // ---------- ФУНКЦИИ ПЛЕЕРА ----------
+    // ---------- ФУНКЦИИ ПЛЕЕРА (без стикеров) ----------
     function savePosition() {
         if (radioAudio && !isNaN(radioAudio.currentTime) && radioAudio.currentTime > 0) {
             localStorage.setItem(tracks[currentTrackKey].storageKey, radioAudio.currentTime);
@@ -374,7 +352,6 @@
     }
 
     function startPlayback() {
-        showPixelSticker();   // <-- стикер вылетает при каждом нажатии "СЛЫШАТЬ"
         radioAudio.play().then(() => {
             updateStatusText(`СЛЫШИШЬ?`);
             startSpinning();
