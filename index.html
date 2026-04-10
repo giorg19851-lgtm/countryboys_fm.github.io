@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Vinyl Selector</title>
+    <title>Vinyl Radio</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         * {
@@ -24,15 +24,18 @@
             position: relative;
         }
 
-        /* Контейнер с кнопками */
+        /* ---------- ЛОББИ ---------- */
         .lobby {
             text-align: center;
             width: 90%;
             max-width: 600px;
             z-index: 2;
+            transition: opacity 0.3s ease;
+        }
+        .lobby.hidden {
+            display: none;
         }
 
-        /* Контейнер для двух пластинок */
         .vinyl-selector {
             display: flex;
             justify-content: center;
@@ -40,7 +43,6 @@
             flex-wrap: wrap;
         }
 
-        /* Стиль кнопки-пластинки */
         .vinyl-button {
             background: none;
             border: none;
@@ -48,17 +50,14 @@
             transition: transform 0.2s ease, filter 0.2s ease;
             filter: drop-shadow(0 0 15px rgba(255,255,255,0.3));
         }
-
         .vinyl-button:hover {
             transform: scale(1.05);
             filter: drop-shadow(0 0 25px rgba(255,255,255,0.6));
         }
-
         .vinyl-button:active {
             transform: scale(0.98);
         }
 
-        /* Сама пластинка (круг с картинкой) */
         .vinyl-disc {
             width: 180px;
             height: 180px;
@@ -69,10 +68,7 @@
             position: relative;
             margin-bottom: 15px;
             box-shadow: 0 0 20px rgba(255,255,255,0.2);
-            transition: box-shadow 0.2s;
         }
-
-        /* Чёрное отверстие в центре */
         .vinyl-disc::after {
             content: "";
             position: absolute;
@@ -86,7 +82,6 @@
             box-shadow: 0 0 0 2px white;
         }
 
-        /* Подпись под кнопкой */
         .vinyl-label {
             font-family: 'Press Start 2P', monospace;
             font-size: 12px;
@@ -99,66 +94,342 @@
             backdrop-filter: blur(4px);
         }
 
-        /* Скрытый аудиоплеер для лобби */
-        #lobbyAudio {
+        /* ---------- ПЛЕЕР ---------- */
+        .player {
+            position: relative;
+            width: 90vw;
+            max-width: 500px;
+            aspect-ratio: 1 / 1;
+            border-radius: 50%;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(255,255,255,0.3);
             display: none;
         }
+        .player.active {
+            display: block;
+        }
 
-        /* Адаптивность */
+        .vinyl-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .vinyl-video.spinning {
+            animation: spin 4s linear infinite;
+        }
+        .vinyl-video::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 12%;
+            height: 12%;
+            background: black;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 0 2px white;
+            pointer-events: none;
+        }
+
+        .player-controls {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 85%;
+            text-align: center;
+            z-index: 10;
+            pointer-events: auto;
+            background: transparent;
+        }
+        h1 {
+            font-size: 14px;
+            margin-bottom: 16px;
+            font-weight: normal;
+            letter-spacing: 1px;
+            color: white;
+            text-shadow: 2px 2px 0 black;
+            line-height: 1.4;
+        }
+        .status {
+            font-size: 14px;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid white;
+            padding: 10px 16px;
+            display: inline-block;
+            backdrop-filter: blur(2px);
+            margin-bottom: 16px;
+            font-family: 'Press Start 2P', monospace;
+            color: white;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        button {
+            font-family: 'Press Start 2P', monospace;
+            background: rgba(0,0,0,0.7);
+            border: 2px solid white;
+            font-size: 14px;
+            padding: 8px 16px;
+            color: white;
+            cursor: pointer;
+            backdrop-filter: blur(2px);
+            transition: 0.05s linear;
+        }
+        button:active {
+            background: white;
+            color: black;
+        }
+        .back-button {
+            background: rgba(0,0,0,0.5);
+            border: 1px solid white;
+            font-size: 10px;
+            padding: 6px 12px;
+            margin-top: 10px;
+        }
+        .blinking-cursor {
+            display: inline-block;
+            width: 10px;
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        .glitch-letter {
+            display: inline-block;
+            transition: opacity 0.05s ease;
+        }
+        .glitch-letter.off {
+            opacity: 0;
+        }
+
         @media (max-width: 500px) {
             .vinyl-disc { width: 130px; height: 130px; }
             .vinyl-label { font-size: 9px; }
             .vinyl-selector { gap: 20px; }
+            h1, .status, button { font-size: 12px; }
         }
     </style>
 </head>
 <body>
 
-<div class="lobby">
+<!-- ЛОББИ -->
+<div id="lobby" class="lobby">
     <div class="vinyl-selector">
-        <!-- Левая кнопка: bathroom pov -->
-        <button class="vinyl-button" id="bathroomBtn">
+        <button class="vinyl-button" data-track="bathroom">
             <div class="vinyl-disc" style="background-image: url('https://raw.githubusercontent.com/giorg19851-lgtm/countryboys_fm.github.io/main/fm.png');"></div>
             <div class="vinyl-label">bathroom pov</div>
         </button>
-
-        <!-- Правая кнопка: for when the oxxy bussin -->
-        <button class="vinyl-button" id="djsetBtn">
+        <button class="vinyl-button" data-track="djset">
             <div class="vinyl-disc" style="background-image: url('https://raw.githubusercontent.com/giorg19851-lgtm/countryboys_fm.github.io/main/fm.png');"></div>
             <div class="vinyl-label">for when the oxxy bussin</div>
         </button>
     </div>
 </div>
 
-<!-- Фоновая музыка для лобби (трек для левой пластинки) -->
-<audio id="lobbyAudio" autoplay loop>
-    <source src="https://videotourl.com/audio/1775784829266-243b505c-ea49-499c-a8cf-fb8b3d856300.mp3" type="audio/mpeg">
-</audio>
+<!-- ПЛЕЕР (изначально скрыт) -->
+<div id="player" class="player">
+    <video class="vinyl-video" id="vinylVideo" loop muted playsinline>
+        <source src="https://github.com/giorg19851-lgtm/countryboys_fm.github.io/raw/refs/heads/main/document_5386562835193042585.mp4" type="video/mp4">
+    </video>
+    <div class="player-controls">
+        <h1 id="playerTitle">COUNTRY BOYS FM</h1>
+        <div class="status" id="playbackStatus">НАЖМИ СЛЫШАТЬ</div>
+        <div class="controls">
+            <button id="startBtn">СЛЫШАТЬ</button>
+            <button id="pauseBtn">ПАУЗА</button>
+            <button id="closeBtn">НЕ СЛЫШАТЬ</button>
+        </div>
+        <button id="backToLobbyBtn" class="back-button">← НАЗАД</button>
+    </div>
+</div>
 
+<!-- Аудио для фоновой музыки лобби и для плеера -->
+<audio id="lobbyAudio" loop style="display: none;"></audio>
+<audio id="radioPlayer" style="display: none;" preload="auto"></audio>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
-    // Получаем элементы
+    // ---------- НАСТРОЙКИ ТРЕКОВ ----------
+    const tracks = {
+        bathroom: {
+            url: "https://videotourl.com/audio/1775784829266-243b505c-ea49-499c-a8cf-fb8b3d856300.mp3",
+            title: "🚽 BATHROOM POV",
+            storageKey: "bathroom_position"
+        },
+        djset: {
+            url: "https://videotourl.com/audio/1775763278412-e5f55dc7-1efc-4948-9f59-cb84416861e2.mp3",
+            title: "🎧 DJ SET",
+            storageKey: "radio_position"
+        }
+    };
+
+    // Элементы DOM
+    const lobbyDiv = document.getElementById('lobby');
+    const playerDiv = document.getElementById('player');
     const lobbyAudio = document.getElementById('lobbyAudio');
-    const bathroomBtn = document.getElementById('bathroomBtn');
-    const djsetBtn = document.getElementById('djsetBtn');
+    const radioAudio = document.getElementById('radioPlayer');
+    const vinylVideo = document.getElementById('vinylVideo');
+    const playerTitle = document.getElementById('playerTitle');
+    const statusDiv = document.getElementById('playbackStatus');
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const closeBtn = document.getElementById('closeBtn');
+    const backToLobbyBtn = document.getElementById('backToLobbyBtn');
 
-    // URL вашего основного плеера с диджей-сетом
-    const DJ_SET_URL = "https://giorg19851-lgtm.github.io/countryboys_fm.github.io/";
+    let currentTrackKey = null;
+    let lobbyPosition = 0; // для сохранения позиции фоновой музыки
 
-    // Обработчик для левой кнопки "bathroom pov" — ничего не делает, просто играет фоновая музыка
-    bathroomBtn.addEventListener('click', () => {
-        console.log("bathroom pov нажата");
-        // Можно добавить всплывашку, но не обязательно
-        alert("Это демо-режим. Вторая пластинка ведёт на радио.");
+    // ---------- ФУНКЦИИ ПЛЕЕРА ----------
+    function savePosition() {
+        if (radioAudio && !isNaN(radioAudio.currentTime) && radioAudio.currentTime > 0) {
+            localStorage.setItem(tracks[currentTrackKey].storageKey, radioAudio.currentTime);
+        }
+    }
+
+    function loadTrack(trackKey) {
+        currentTrackKey = trackKey;
+        const track = tracks[trackKey];
+        playerTitle.innerText = track.title;
+        radioAudio.src = track.url;
+        radioAudio.load();
+        const savedTime = localStorage.getItem(track.storageKey);
+        if (savedTime && !isNaN(parseFloat(savedTime))) {
+            radioAudio.currentTime = parseFloat(savedTime);
+            const mins = Math.floor(parseFloat(savedTime) / 60);
+            const secs = Math.floor(parseFloat(savedTime) % 60).toString().padStart(2,'0');
+            updateStatusText(`⏸ ТАЙМКОД ${mins}:${secs}`);
+        } else {
+            radioAudio.currentTime = 0;
+            updateStatusText(`НАЖМИ СЛЫШАТЬ`);
+        }
+    }
+
+    function startSpinning() {
+        vinylVideo.classList.add('spinning');
+        vinylVideo.play().catch(e => console.log("video play", e));
+    }
+    function stopSpinning() {
+        vinylVideo.classList.remove('spinning');
+        vinylVideo.pause();
+    }
+
+    function startPlayback() {
+        radioAudio.play().then(() => {
+            updateStatusText(`СЛЫШИШЬ?`);
+            startSpinning();
+        }).catch(() => updateStatusText(`ОШИБКА`));
+    }
+
+    function pausePlayback() {
+        radioAudio.pause();
+        updateStatusText(`ПАУЗА`);
+        stopSpinning();
+    }
+
+    function closePlayer() {
+        // Возвращаемся в лобби
+        showLobby();
+    }
+
+    function updateStatusText(newText) {
+        statusDiv.innerText = newText;
+        const letters = newText.split('');
+        const spans = letters.map(char => char === ' ' ? ' ' : `<span class="glitch-letter">${char}</span>`);
+        statusDiv.innerHTML = spans.join('') + '<span class="blinking-cursor">_</span>';
+        // мерцание букв (упрощённо, без интервалов, но можно добавить)
+    }
+
+    // ---------- ПЕРЕКЛЮЧЕНИЕ МЕЖДУ ЛОББИ И ПЛЕЕРОМ ----------
+    let lobbyAudioPlaying = false;
+
+    function showLobby() {
+        // Останавливаем плеер и прячем его
+        if (radioAudio && !radioAudio.paused) {
+            radioAudio.pause();
+            stopSpinning();
+        }
+        playerDiv.classList.remove('active');
+        lobbyDiv.classList.remove('hidden');
+        // Восстанавливаем фоновую музыку лобби
+        if (lobbyAudio.src) {
+            lobbyAudio.currentTime = lobbyPosition;
+            lobbyAudio.play().catch(e => console.log("lobby audio play", e));
+        }
+    }
+
+    function showPlayer(trackKey) {
+        // Сохраняем позицию фоновой музыки лобби и останавливаем её
+        if (lobbyAudio && !lobbyAudio.paused) {
+            lobbyPosition = lobbyAudio.currentTime;
+            lobbyAudio.pause();
+        }
+        // Прячем лобби, показываем плеер
+        lobbyDiv.classList.add('hidden');
+        playerDiv.classList.add('active');
+        // Загружаем выбранный трек
+        loadTrack(trackKey);
+        // Не запускаем автоматически, только по кнопке СТАРТ
+        if (radioAudio.currentTime > 0 && !radioAudio.paused) {
+            startSpinning();
+        } else {
+            stopSpinning();
+        }
+    }
+
+    // ---------- ОБРАБОТЧИКИ ----------
+    // Выбор пластинки в лобби
+    document.querySelectorAll('.vinyl-button').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const track = btn.dataset.track;
+            if (track === 'bathroom') {
+                showPlayer('bathroom');
+            } else if (track === 'djset') {
+                showPlayer('djset');
+            }
+        });
     });
 
-    // Обработчик для правой кнопки — переход на основной плеер
-    djsetBtn.addEventListener('click', () => {
-        lobbyAudio.pause(); // останавливаем музыку лобби
-        window.location.href = DJ_SET_URL; // переходим
+    // Кнопки плеера
+    startBtn.addEventListener('click', () => {
+        if (!radioAudio.src) loadTrack(currentTrackKey);
+        startPlayback();
     });
+    pauseBtn.addEventListener('click', pausePlayback);
+    closeBtn.addEventListener('click', () => {
+        // Закрываем приложение Telegram
+        const tg = window.Telegram.WebApp;
+        tg.close();
+    });
+    backToLobbyBtn.addEventListener('click', showLobby);
 
-    // Боремся с автовоспроизведением (браузеры блокируют)
-    function attemptPlay() {
+    // Сохранение позиции плеера
+    setInterval(() => {
+        if (radioAudio && !radioAudio.paused && !isNaN(radioAudio.currentTime)) {
+            savePosition();
+        }
+    }, 2000);
+    window.addEventListener('beforeunload', () => savePosition());
+
+    // Инициализация: загружаем фоновую музыку лобби
+    lobbyAudio.src = "https://image2url.com/r2/default/audio/1775781111930-526b21fb-d872-4a73-a9f8-acfcc4264107.mp3";
+    lobbyAudio.load();
+    // Автовоспроизведение лобби (с обходом блокировки)
+    function attemptLobbyPlay() {
         lobbyAudio.play().catch(() => {
             const playOnInteraction = () => {
                 lobbyAudio.play();
@@ -169,19 +440,28 @@
             document.body.addEventListener('click', playOnInteraction);
         });
     }
-    window.addEventListener('load', attemptPlay);
+    window.addEventListener('load', attemptLobbyPlay);
 
-    // Анимация вращения пластинок при наведении
-    const discs = document.querySelectorAll('.vinyl-disc');
-    discs.forEach(disc => {
-        disc.style.transition = 'transform 0.3s linear';
-        disc.addEventListener('mouseenter', () => {
-            disc.style.transform = 'rotate(10deg) scale(1.02)';
-        });
-        disc.addEventListener('mouseleave', () => {
-            disc.style.transform = 'rotate(0deg) scale(1)';
-        });
+    // Для плеера тоже нужна инициализация (но без автовоспроизведения)
+    // Также обработка окончания трека
+    radioAudio.addEventListener('ended', () => {
+        radioAudio.currentTime = 0;
+        localStorage.setItem(tracks[currentTrackKey].storageKey, 0);
+        updateStatusText(`КОНЕЦ (ЖМИ СЛЫШАТЬ)`);
+        stopSpinning();
     });
+
+    // Telegram WebApp (для кнопки "НЕ СЛЫШАТЬ")
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.MainButton.hide();
+
+    // Дополнительно: если пользователь вернулся в лобби, сохраняем позицию фоновой музыки
+    setInterval(() => {
+        if (lobbyAudio && !lobbyAudio.paused && !isNaN(lobbyAudio.currentTime)) {
+            lobbyPosition = lobbyAudio.currentTime;
+        }
+    }, 2000);
 </script>
 </body>
 </html>
